@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - Youtube hide video
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1
+// @version			0.2
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL		https://github.com/AlucardDH/userscripts/raw/master/yt_hide_videos.user.js
@@ -21,6 +21,7 @@
 
 console.log("DH - Youtube hide video : loaded !");
 var youtube_item = ".yt-shelf-grid-item>div";
+var youtube_item2 = ".expanded-shelf-content-item>div";
 
 function isHidden(videoId) {
 	var value = GM_getValue(videoId);
@@ -47,6 +48,20 @@ function addHideButton(element,videoId) {
 	element.append(button);	
 }
 
+function addHideButton2(element,videoId) {
+	if(element.attr("data-hide-button-done")) {
+		return;
+	}
+	
+	element.attr("data-hide-button-done","true");
+	var button = $("<button>Cacher</button>");
+	button.click(function() {
+		hide(videoId);
+		element.parent().parent().parent().parent().parent().parent().parent().parent().remove();
+	});
+	element.append(button);	
+}
+
 var interval = setInterval(function() {
 	var videos = $(youtube_item);
 	//console.log(videos);
@@ -57,6 +72,17 @@ var interval = setInterval(function() {
 			video.parent().remove();
 		} else {
 			addHideButton(video,videoId);
+		}
+	});
+	var videos = $(youtube_item2);
+	//console.log(videos);
+	$.each(videos,function(index,video) {
+		video = $(video);
+		var videoId = video.attr("data-context-item-id");
+		if(isHidden(videoId)) {
+			video.parent().parent().parent().parent().parent().parent().parent().parent().remove();
+		} else {
+			addHideButton2(video,videoId);
 		}
 	});
 },5000);
