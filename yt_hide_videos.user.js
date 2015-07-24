@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name			DH - Youtube hide video
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.3
+// @version			0.3.1
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL		https://github.com/AlucardDH/userscripts/raw/master/yt_hide_videos.user.js
 // @updateURL		https://github.com/AlucardDH/userscripts/raw/master/yt_hide_videos.user.js
-// @match			https://www.youtube.com/feed/subscriptions
-// @match			https://www.youtube.com/feed/subscriptions/*
-// @include        	https://www.youtube.com/feed/subscriptions
-// @include        	https://www.youtube.com/feed/subscriptions/*
+// @match			https://www.youtube.com
+// @match			https://www.youtube.com*
+// @include        	https://www.youtube.com
+// @include        	https://www.youtube.com*
 // @require 		http://code.jquery.com/jquery-2.1.4.min.js
 // @grant			GM_addStyle
 // @grant			GM_getValue
