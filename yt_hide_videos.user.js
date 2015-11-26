@@ -4,8 +4,8 @@
 // @version			0.4
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
-// @downloadURL		https://github.com/AlucardDH/userscripts/raw/master/yt_hide_videos.user.js
-// @updateURL		https://github.com/AlucardDH/userscripts/raw/master/yt_hide_videos.user.js
+// @downloadURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
+// @updateURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
 // @match        	https://www.youtube.com/feed/subscriptions*
 // @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant			GM_addStyle
