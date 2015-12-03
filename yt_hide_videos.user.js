@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - Youtube hide video
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.4
+// @version			0.5
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -41,6 +41,14 @@ function isHidden(itemId) {
 
 function hide(itemId) {
     GM_setValue(itemId,true);
+}
+
+unsafeWindow.hideTitles = function(title) {
+	$.each($('a[title*="'+title+'"]').closest(".yt-lockup"),function(index,element) {
+        var e = $(element);
+        var itemId = e.attr("data-context-item-id");
+		hide(itemId);
+    });
 }
 
 function hideWatched() {
