@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - Youtube hide video
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.6
+// @version			0.7
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -13,12 +13,16 @@
 // @grant			GM_setValue
 // @grant			GM_deleteValue
 // @grant			GM_listValues
+// @grant			GM_xmlhttpRequest
 // @grant			unsafeWindow
 // ==/UserScript==
 
 console.log("DH - Youtube hide video : loaded !");
 
 var SCRIPT_BASE = "YTH";
+var MATCH_PREFIX = "MATCH_";
+
+unsafeWindow.matches = [];
 
 unsafeWindow.mangoLogin = function(database,apiKey) {
     GM_setValue(SCRIPT_BASE+"_mango_database",database);
@@ -27,7 +31,7 @@ unsafeWindow.mangoLogin = function(database,apiKey) {
 };
 
 function checkMango() {
-    return GM_getValue(SCRIPT_BASE+"_mango_database") && GM_getValue(SCRIPT_BASE+"_mango_apiKey");
+   return GM_getValue(SCRIPT_BASE+"_mango_database")!=null && GM_getValue(SCRIPT_BASE+"_mango_apiKey")!=null;
 }
 
 function getMangoCollectionUrl() {
@@ -44,20 +48,28 @@ function getMangoApiKey() {
 
 function exportToMango() {
     if(checkMango()) {
-        $.ajax( { url: getMangoCollectionUrl()+getMangoApiKey(),
-            data: JSON.stringify( { "_id" : "youtubeIds","content":unsafeWindow.exportHidden() } ),
-            type: "POST",
-            contentType: "application/json" } );
+        GM_xmlhttpRequest({
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            url: getMangoCollectionUrl()+getMangoApiKey(),
+            data: JSON.stringify( { "_id" : "youtubeIds","content":unsafeWindow.exportHidden() } )
+        });
     }
 }
 
 function importFromMango() {
     if(checkMango()) {
-        $.ajax(getMangoDocumentYoutubeIds()+getMangoApiKey(),
-            function(data) {
-                unsafeWindow.importHidden(data.content);
+        console.log("Import from Mango : "+getMangoDocumentYoutubeIds()+getMangoApiKey());
+        GM_xmlhttpRequest({
+            method: "GET",
+            responseType :"json",
+            url: getMangoDocumentYoutubeIds()+getMangoApiKey(),
+            onload:  function(data) {
+                 unsafeWindow.importHidden(data.response.content);
             }
-        );
+        });
     }
 }
 
@@ -66,17 +78,21 @@ unsafeWindow.exportHidden = function() {
     
 	var keys = GM_listValues();
     for (var i=0,key=null; key=keys[i]; i++) {
-        if(result.length>0) result += ",";
-        result += key;
+        if(!key.startsWith(SCRIPT_BASE)) {
+            if(result.length>0) result += ",";
+            result += key;
+        }
     }
-	console.log(result);
     return result;
 };
 
 unsafeWindow.importHidden = function(idsString) {
-	var keys = idsString.split(",");
+    var keys = idsString.split(",");
     for (var i=0,key=null; key=keys[i]; i++) {
-        hide(key,false);
+        GM_setValue(key,true);
+        if(key.startsWith(MATCH_PREFIX)) {
+            matches.push(key.substring(MATCH_PREFIX.length));
+        }
     }
     exportToMango();
 };
@@ -90,17 +106,27 @@ function hide(itemId,exportWeb) {
     if(exportWeb) exportToMango();
 }
 
-unsafeWindow.hideTitles = function(title) {
+unsafeWindow.hideMatch = function(text,exportWeb)  {
+    GM_setValue(MATCH_PREFIX+text,true);
+    matches.push(text);
+    if(exportWeb) exportToMango();
+};
+
+unsafeWindow.hideTitles = function(title,exportWeb) {
 	$.each($('a[title*="'+title+'"]').closest(".yt-lockup"),function(index,element) {
         var e = $(element);
         var itemId = e.attr("data-context-item-id");
 		hide(itemId,false);
     });
-    exportToMango();
+    if(exportWeb) exportToMango();
 };
 
 function hideWatched() {
     $(".watched-badge").closest('.yt-shelf-grid-item').remove();
+    $.each(matches,function(index,text) {
+        hideTitles(text);
+    });
+    exportToMango();
     $.each($(".yt-lockup"),function(index,element) {
         var e = $(element);
         var itemId = e.attr("data-context-item-id");
