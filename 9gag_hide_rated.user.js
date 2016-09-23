@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1
+// @version			0.2
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	http://9gag.com/*
 // @exclude        	http://9gag.com/gag*
+// @exclude         http://9gag.com/u/alucarddh/*
 // @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // ==/UserScript==
 
