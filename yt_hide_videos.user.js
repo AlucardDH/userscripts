@@ -1,20 +1,20 @@
 // ==UserScript==
-// @name			DH - Youtube hide video
-// @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.7
-// @author			AlucardDH
-// @projectPage		https://github.com/AlucardDH/userscripts
-// @downloadURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
-// @updateURL		https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
-// @match        	https://www.youtube.com/feed/subscriptions*
-// @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
-// @grant			GM_addStyle
-// @grant			GM_getValue
-// @grant			GM_setValue
-// @grant			GM_deleteValue
-// @grant			GM_listValues
-// @grant			GM_xmlhttpRequest
-// @grant			unsafeWindow
+// @name            DH - Youtube hide video
+// @namespace       https://github.com/AlucardDH/userscripts
+// @version         0.8
+// @author          AlucardDH
+// @projectPage     https://github.com/AlucardDH/userscripts
+// @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
+// @updateURL       https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
+// @match           https://www.youtube.com/feed/subscriptions*
+// @require         https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
+// @grant           GM_addStyle
+// @grant           GM_getValue
+// @grant           GM_setValue
+// @grant           GM_deleteValue
+// @grant           GM_listValues
+// @grant           GM_xmlhttpRequest
+// @grant           unsafeWindow
 // ==/UserScript==
 
 console.log("DH - Youtube hide video : loaded !");
@@ -76,7 +76,7 @@ function importFromMango() {
 unsafeWindow.exportHidden = function() {
     var result = "";
     
-	var keys = GM_listValues();
+    var keys = GM_listValues();
     for (var i=0,key=null; key=keys[i]; i++) {
         if(!key.startsWith(SCRIPT_BASE)) {
             if(result.length>0) result += ",";
@@ -113,16 +113,17 @@ unsafeWindow.hideMatch = function(text,exportWeb)  {
 };
 
 unsafeWindow.hideTitles = function(title,exportWeb) {
-	$.each($('a[title*="'+title+'"]').closest(".yt-lockup"),function(index,element) {
+    $.each($('a[title*="'+title+'"]').closest(".yt-lockup"),function(index,element) {
         var e = $(element);
         var itemId = e.attr("data-context-item-id");
-		hide(itemId,false);
+        hide(itemId,false);
     });
     if(exportWeb) exportToMango();
 };
 
 function hideWatched() {
     $(".watched-badge").closest('.yt-shelf-grid-item').remove();
+    $(".resume-playback-progress-bar").closest('.yt-shelf-grid-item').remove();
     $.each(matches,function(index,text) {
         hideTitles(text);
     });
