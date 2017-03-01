@@ -1,28 +1,27 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.8
+// @version         0.9
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
 // @updateURL       https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
 // @match           https://www.youtube.com/feed/subscriptions*
 // @require         https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
-// @grant           GM_addStyle
 // @grant           GM_getValue
 // @grant           GM_setValue
-// @grant           GM_deleteValue
-// @grant           GM_listValues
 // @grant           GM_xmlhttpRequest
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video : loaded !");
+console.log("DH - Youtube hide video 2 : loaded !");
 
 var SCRIPT_BASE = "YTH";
 var MATCH_PREFIX = "MATCH_";
 
-unsafeWindow.matches = [];
+var MATCH_PATTERN = /MATCH_(.*?),/g;
+
+var data = "";
 
 unsafeWindow.mangoLogin = function(database,apiKey) {
     GM_setValue(SCRIPT_BASE+"_mango_database",database);
@@ -54,7 +53,7 @@ function exportToMango() {
                 "Content-Type": "application/json"
             },
             url: getMangoCollectionUrl()+getMangoApiKey(),
-            data: JSON.stringify( { "_id" : "youtubeIds","content":unsafeWindow.exportHidden() } )
+            data: JSON.stringify( { "_id" : "youtubeIds","content":data } )
         });
     }
 }
@@ -66,68 +65,42 @@ function importFromMango() {
             method: "GET",
             responseType :"json",
             url: getMangoDocumentYoutubeIds()+getMangoApiKey(),
-            onload:  function(data) {
-                 unsafeWindow.importHidden(data.response.content);
+            onload:  function(result) {
+                data = result.response.content;
+                console.log("data from Mango",data);
+        //         unsafeWindow.importHidden(data.response.content);
             }
         });
     }
 }
 
-unsafeWindow.exportHidden = function() {
-    var result = "";
-    
-    var keys = GM_listValues();
-    for (var i=0,key=null; key=keys[i]; i++) {
-        if(!key.startsWith(SCRIPT_BASE)) {
-            if(result.length>0) result += ",";
-            result += key;
-        }
-    }
-    return result;
-};
-
-unsafeWindow.importHidden = function(idsString) {
-    var keys = idsString.split(",");
-    for (var i=0,key=null; key=keys[i]; i++) {
-        GM_setValue(key,true);
-        if(key.startsWith(MATCH_PREFIX)) {
-            matches.push(key.substring(MATCH_PREFIX.length));
-        }
-    }
-    exportToMango();
-};
-
 function isHidden(itemId) {
-    return GM_getValue(itemId);
+    return data.indexOf(itemId)!=-1;
 }
 
 function hide(itemId,exportWeb) {
-    GM_setValue(itemId,true);
+    data += itemId+',';
     if(exportWeb) exportToMango();
 }
 
-unsafeWindow.hideMatch = function(text,exportWeb)  {
-    GM_setValue(MATCH_PREFIX+text,true);
-    matches.push(text);
-    if(exportWeb) exportToMango();
+unsafeWindow.hideMatch = function(text)  {
+    data += MATCH_PREFIX+text+',';
+    exportToMango();
 };
 
 unsafeWindow.hideTitles = function(title,exportWeb) {
-    $.each($('a[title*="'+title+'"]').closest(".yt-lockup"),function(index,element) {
-        var e = $(element);
-        var itemId = e.attr("data-context-item-id");
-        hide(itemId,false);
-    });
-    if(exportWeb) exportToMango();
+    $('a[title*="'+title+'"]').closest('.yt-shelf-grid-item').remove();
 };
 
 function hideWatched() {
     $(".watched-badge").closest('.yt-shelf-grid-item').remove();
     $(".resume-playback-progress-bar").closest('.yt-shelf-grid-item').remove();
-    $.each(matches,function(index,text) {
-        hideTitles(text);
-    });
-    exportToMango();
+
+    var titleMatch;
+    while ((titleMatch = MATCH_PATTERN.exec(data)) != null) {
+        $('a[title*="'+titleMatch[1]+'"]').closest('.yt-shelf-grid-item').remove();
+    }
+
     $.each($(".yt-lockup"),function(index,element) {
         var e = $(element);
         var itemId = e.attr("data-context-item-id");
