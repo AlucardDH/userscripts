@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.9
+// @version         0.9.1
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -34,7 +34,7 @@ function checkMango() {
 }
 
 function getMangoCollectionUrl() {
-    return "https://api.mongolab.com/api/1/databases/"+GM_getValue(SCRIPT_BASE+"_mango_database")+"/collections/YTH";
+    return "https://api.mlab.com/api/1/databases/"+GM_getValue(SCRIPT_BASE+"_mango_database")+"/collections/YTH";
 }
 
 function getMangoDocumentYoutubeIds() {
