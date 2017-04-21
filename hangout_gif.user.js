@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Google mail GIF auto
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2.1
 // @description  Replace link to gif or 9gag by the image
 // @author       You
-// @match        https://hangouts.google.com/webchat/u/0/frame*
+// @match        https://hangouts.google.com/webchat/*
 // @grant        none
 // ==/UserScript==
 
@@ -54,5 +54,5 @@ function apply() {
 (function() {
     'use strict';
     
-    setInterval(apply,2500);
+    setInterval(apply,5000);
 })();
