@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.9.1
+// @version         0.10.0
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -93,19 +93,23 @@ unsafeWindow.hideTitles = function(title,exportWeb) {
 };
 
 function hideWatched() {
-    $(".watched-badge").closest('.yt-shelf-grid-item').remove();
-    $(".resume-playback-progress-bar").closest('.yt-shelf-grid-item').remove();
+    $("ytd-thumbnail-overlay-playback-status-renderer").closest('ytd-grid-video-renderer').remove();
+    $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer').remove();
 
     var titleMatch;
     while ((titleMatch = MATCH_PATTERN.exec(data)) != null) {
-        $('a[title*="'+titleMatch[1]+'"]').closest('.yt-shelf-grid-item').remove();
+        $('a[title*="'+titleMatch[1]+'"]').closest('ytd-grid-video-renderer').remove();
     }
 
-    $.each($(".yt-lockup"),function(index,element) {
+    $.each($("ytd-grid-video-renderer"),function(index,element) {
         var e = $(element);
-        var itemId = e.attr("data-context-item-id");
+        var itemId = $(e.find('a')[0]).attr("href");
+        itemId.substring(itemId.indexOf('=')+1);
+        if(itemId.indexOf('?')>-1) {
+            itemId.substring(0,itemId.indexOf('?'));
+        }
         if(isHidden(itemId)) {
-            e.closest('.yt-shelf-grid-item').remove();
+            e.remove();
         } else {
             if(!e.hasClass("dhdone")) {
                 var a = $('<a>Cacher</a>');
