@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.10.0
+// @version         0.10.1
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -112,7 +112,7 @@ function hideWatched() {
             e.remove();
         } else {
             if(!e.hasClass("dhdone")) {
-                var a = $('<a>Cacher</a>');
+                var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
                 a.click(function(){hide(itemId,true);});
                 e.append(a);
                 e.addClass("dhdone");
