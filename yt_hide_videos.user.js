@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.10.1
+// @version         0.10.2
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
 // @updateURL       https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
-// @match           https://www.youtube.com/feed/subscriptions*
+// @match           https://www.youtube.com/*
 // @require         https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -93,6 +93,8 @@ unsafeWindow.hideTitles = function(title,exportWeb) {
 };
 
 function hideWatched() {
+    if(window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')<0) return;
+
     $("ytd-thumbnail-overlay-playback-status-renderer").closest('ytd-grid-video-renderer').remove();
     $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer').remove();
 
