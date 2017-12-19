@@ -14,7 +14,11 @@
 // ==/UserScript==
 
 function selectAndDelete() {
-    $("[title='Sélectionner tous les éléments dans la vue']").click();
+    var checkboxes = $("[role=checkbox]");
+    for(var i=1;i<checkboxes.length;i++) {
+        $(checkboxes[i]).click();
+    }
+    //$("[title='Sélectionner tous les éléments dans la vue']").click();
     $("[title='Supprimer (Suppr)']").click();
 }
 
@@ -30,7 +34,7 @@ function somethingToDelete() {
 unsafeWindow.deleteAllSearch = function() {
   if(getSearch() && somethingToDelete()) {
       GM_setValue('deleteAll',getSearch());
-      waitingForReload = 10;
+      waitingForReload = 30;
   }
 };
 
@@ -51,7 +55,7 @@ waitingForReload = 0;
             waitingForReload--;
         } else if(GM_getValue('deleteAll') && getSearch()==GM_getValue('deleteAll') && somethingToDelete()) {
             selectAndDelete();
-            waitingForReload = 10;
+            waitingForReload = 30;
         } else {
             GM_deleteValue('deleteAll');
         }
