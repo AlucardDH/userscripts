@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag night mode
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1.1
+// @version			0.1.2
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -40,4 +40,7 @@ setTimeout(function(){
     $("#sidebar-content").remove();
 },100);
 
+setInterval(function() {
+	$('video').attr('controls','true');
+},100);
 
