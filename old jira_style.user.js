@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DH - Jira+
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2.1
 // @match        https://jira.gfi.fr/secure/IssueNavigator.jspa*
-// @match        https://delivery.gfi.fr/jira/issues*
+// @match        https://delivery.gfi.fr/jira/*
 // @grant        none
 // ==/UserScript==
 
@@ -41,14 +41,16 @@ var color = {
 
 
 console.log("Jira+ loaded");
-var issues = document.getElementsByClassName("issuerow");
-for(var i=0;i<issues.length;i++) {
-    var status = issues[i].getElementsByClassName("status")[0].innerText.trim().toLowerCase();
-    var c = color[status];
-    if(c) {
-        issues[i].style.background=c;
-    }
-}
+setInterval(function(){
+	var issues = document.getElementsByClassName("issuerow");
+	for(var i=0;i<issues.length;i++) {
+	    var status = issues[i].getElementsByClassName("status")[0].innerText.trim().toLowerCase();
+	    var c = color[status];
+	    if(c) {
+	        issues[i].style.background=c;
+	    }
+	}
 
-document.getElementsByClassName("focused")[0].classList.remove("focused");
+	document.getElementsByClassName("focused")[0].classList.remove("focused");
+},5000);
 
