@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Outlook delete all search
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://outlook.office.com/owa/*
@@ -14,7 +14,7 @@
 // ==/UserScript==
 
 function selectAndDelete() {
-    var checkboxes = $("[role=checkbox]");
+    var checkboxes = $("[role=listbox][draggable=true] [role=checkbox]");
     for(var i=1;i<checkboxes.length;i++) {
         $(checkboxes[i]).click();
     }
@@ -27,8 +27,9 @@ function getSearch() {
 }
 
 function somethingToDelete() {
-    console.log('checkboxes',$("[role=checkbox]").length);
-    return $("[role=checkbox]").length>1;
+    var nb = $("[role=listbox][draggable=true] [role=checkbox]").length;
+    console.log('checkboxes',nb);
+    return nb>0;
 }
 
 unsafeWindow.deleteAllSearch = function() {
