@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.10.2
+// @version         0.11
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -92,6 +92,15 @@ unsafeWindow.hideTitles = function(title,exportWeb) {
     $('a[title*="'+title+'"]').closest('.yt-shelf-grid-item').remove();
 };
 
+function titleMatchToSelector(titleMatch) {
+	var matches = titleMatch.split('&&');
+	var result = '';
+	for(var i=0;i<matches.length;i++) {
+		result += '[title*="'+matches[i]+'"]'
+	}
+	return result;
+}
+
 function hideWatched() {
     if(window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')<0) return;
 
@@ -100,7 +109,7 @@ function hideWatched() {
 
     var titleMatch;
     while ((titleMatch = MATCH_PATTERN.exec(data)) != null) {
-        $('a[title*="'+titleMatch[1]+'"]').closest('ytd-grid-video-renderer').remove();
+    	$('a'+titleMatchToSelector(titleMatch[1])).closest('ytd-grid-video-renderer').remove();
     }
 
     $.each($("ytd-grid-video-renderer"),function(index,element) {
