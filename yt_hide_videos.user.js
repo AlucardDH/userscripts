@@ -48,7 +48,6 @@ unsafeWindow.mlabLogin = function(database,apiKey) {
 };
 
 function mlabIsLogged() {
-    console.log(getScriptParam(MLAB_APIKEY_KEY),getScriptParam(MLAB_DATABASE_KEY));
     return hasScriptParam(MLAB_APIKEY_KEY) && hasScriptParam(MLAB_DATABASE_KEY);
 }
 
