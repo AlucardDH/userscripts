@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name            DH - Youtube hide video
+// @name            DH - Youtube hide video 2.0
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.11
+// @version         2.0
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -15,91 +15,190 @@
 // ==/UserScript==
 
 console.log("DH - Youtube hide video 2 : loaded !");
+console.log("Call mlabLogin(database,apiKey) to connect to mlab (it will import old data)");
+
+// ----------------- USERSCRIPT UTILS -----------------
 
 var SCRIPT_BASE = "YTH";
-var MATCH_PREFIX = "MATCH_";
 
-var MATCH_PATTERN = /MATCH_(.*?),/g;
+function setScriptParam(key,value) {
+    GM_setValue(SCRIPT_BASE+"_"+key,value);
+}
 
-var data = "";
+function getScriptParam(key) {
+    return GM_getValue(SCRIPT_BASE+"_"+key);
+}
 
-unsafeWindow.mangoLogin = function(database,apiKey) {
-    GM_setValue(SCRIPT_BASE+"_mango_database",database);
-    GM_setValue(SCRIPT_BASE+"_mango_apiKey",apiKey);
-    importFromMango();
+function hasScriptParam(key) {
+    return getScriptParam(key);
+}
+
+// ----------------- MLAB UTILS -----------------
+
+var MLAB_BASE_URL = "https://api.mlab.com/api/1";
+var MLAB_DATABASE_KEY = "MLAB_DB";
+var MLAB_APIKEY_KEY = "MLAB_APIKEY";
+
+unsafeWindow.mlabLogin = function(database,apiKey) {
+    setScriptParam(MLAB_DATABASE_KEY,database);
+    setScriptParam(MLAB_APIKEY_KEY,apiKey);
+
+    oldImport();
+    importFromMlab();
 };
 
-function checkMango() {
-   return GM_getValue(SCRIPT_BASE+"_mango_database")!=null && GM_getValue(SCRIPT_BASE+"_mango_apiKey")!=null;
+function mlabIsLogged() {
+    console.log(getScriptParam(MLAB_APIKEY_KEY),getScriptParam(MLAB_DATABASE_KEY));
+    return hasScriptParam(MLAB_APIKEY_KEY) && hasScriptParam(MLAB_DATABASE_KEY);
 }
 
-function getMangoCollectionUrl() {
-    return "https://api.mlab.com/api/1/databases/"+GM_getValue(SCRIPT_BASE+"_mango_database")+"/collections/YTH";
+function mlabFormattedKey() {
+    return "?apiKey="+getScriptParam(MLAB_APIKEY_KEY);
 }
 
-function getMangoDocumentYoutubeIds() {
-    return getMangoCollectionUrl()+"/youtubeIds";
-}
-
-function getMangoApiKey() {
-    return "?apiKey="+GM_getValue(SCRIPT_BASE+"_mango_apiKey");
-}
-
-function exportToMango() {
-    if(checkMango()) {
-        GM_xmlhttpRequest({
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            url: getMangoCollectionUrl()+getMangoApiKey(),
-            data: JSON.stringify( { "_id" : "youtubeIds","content":data } )
-        });
+function mlabAddDocumentToCollection(collection,document) {
+    if(!mlabIsLogged()) {
+        return;
     }
+
+    GM_xmlhttpRequest({
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey(),
+        data: JSON.stringify(document)
+    });
 }
 
-function importFromMango() {
-    if(checkMango()) {
-        console.log("Import from Mango : "+getMangoDocumentYoutubeIds()+getMangoApiKey());
-        GM_xmlhttpRequest({
-            method: "GET",
-            responseType :"json",
-            url: getMangoDocumentYoutubeIds()+getMangoApiKey(),
-            onload:  function(result) {
-                data = result.response.content;
-                console.log("data from Mango",data);
-        //         unsafeWindow.importHidden(data.response.content);
+function mlabGetCollection(collection,onSuccess) {
+    if(!mlabIsLogged()) {
+        return;
+    }
+
+    GM_xmlhttpRequest({
+        method: "GET",
+        responseType :"json",
+        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey(),
+        onload:  function(result) {
+            var data = result.response;
+            console.log(data);
+            onSuccess(data);
+        }
+    });
+}
+
+function mlabGetDocument(collection,documentId,onSuccess) {
+    if(!mlabIsLogged()) {
+        return;
+    }
+
+    GM_xmlhttpRequest({
+        method: "GET",
+        responseType :"json",
+        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+"/"+documentId+mlabFormattedKey(),
+        onload:  function(result) {
+            var data = result.response;
+            console.log(data);
+            onSuccess(data);
+        }
+    });
+}
+
+// ----------------- FILTERS -----------------
+
+var MLAB_COLLECTION_IDS = SCRIPT_BASE+"_IDS";
+var FILTERED_IDS = "";
+
+function filterId(id) {
+    if(isFilteredId(id)) {
+        return;
+    }
+
+    var filter = {'_id':id,'date':new Date().toISOString()};
+    FILTERED_IDS += id+",";
+    
+    mlabAddDocumentToCollection(MLAB_COLLECTION_IDS,filter)
+}
+
+function isFilteredId(id) {
+    return FILTERED_IDS.indexOf(id)!=-1;
+}
+
+function importFilteredIds() {
+    mlabGetCollection(MLAB_COLLECTION_IDS,function(result) {
+        result.forEach(function(filter){
+            FILTERED_IDS += filter['_id']+",";
+        });
+    });
+}
+
+var MLAB_COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
+var FILTERED_TTITLES = [];
+
+// title can be a string or an array
+unsafeWindow.filterTitle = function(title) {
+    if(!Array.isArray(title)) {
+        title = [title];
+    }
+
+    var filter = {'parts':title,'date':new Date().toISOString()};
+    FILTERED_TTITLES.push(filter);
+    
+    mlabAddDocumentToCollection(MLAB_COLLECTION_TITLES,filter);
+}
+
+function getFilterTitleSelector(filter) {
+    if(filter.selector) {
+        return filter.selector;
+    }
+
+    var result = '';
+    filter.parts.forEach(function(p) {
+        result += '[title*="'+p+'"]';
+    });
+    filter.selector = result;
+
+    return result;
+}
+
+function importFilteredTitles() {
+    mlabGetCollection(MLAB_COLLECTION_TITLES,function(result) {
+        result.forEach(function(filter){
+            FILTERED_TTITLES.push(filter);
+        });
+    });
+}
+
+// ----------------- OLD IMPORT -----------------
+
+var OLD_COLLECTION = "YTH";
+var OLD_DOCUEMENT_ID = "youtubeIds";
+var OLD_MATCH_PREFIX = "MATCH_";
+
+function oldImport() {
+    mlabGetDocument(OLD_COLLECTION,OLD_DOCUEMENT_ID,function(result){
+        var content = result.content;
+        var items = content.split(',');
+        items.forEach(function(item){
+            if(item.indexOf(OLD_MATCH_PREFIX)>-1) {
+                item = item.substring(OLD_MATCH_PREFIX.length);
+                filterTitle(item.split('&&'));
+            } else if(item) {
+                filterId(item);
             }
         });
-    }
+    });
 }
 
-function isHidden(itemId) {
-    return data.indexOf(itemId)!=-1;
+// ----------------- NEW IMPORT -----------------
+
+function importFromMlab() {
+    importFilteredIds();
+    importFilteredTitles();
 }
 
-function hide(itemId,exportWeb) {
-    data += itemId+',';
-    if(exportWeb) exportToMango();
-}
-
-unsafeWindow.hideMatch = function(text)  {
-    data += MATCH_PREFIX+text+',';
-    exportToMango();
-};
-
-unsafeWindow.hideTitles = function(title,exportWeb) {
-    $('a[title*="'+title+'"]').closest('.yt-shelf-grid-item').remove();
-};
-
-function titleMatchToSelector(titleMatch) {
-	var matches = titleMatch.split('&&');
-	var result = '';
-	for(var i=0;i<matches.length;i++) {
-		result += '[title*="'+matches[i]+'"]'
-	}
-	return result;
-}
+// ----------------- APPLY FILTERS -----------------
 
 function hideWatched() {
     if(window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')<0) return;
@@ -107,10 +206,9 @@ function hideWatched() {
     $("ytd-thumbnail-overlay-playback-status-renderer").closest('ytd-grid-video-renderer').remove();
     $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer').remove();
 
-    var titleMatch;
-    while ((titleMatch = MATCH_PATTERN.exec(data)) != null) {
-    	$('a'+titleMatchToSelector(titleMatch[1])).closest('ytd-grid-video-renderer').remove();
-    }
+    FILTERED_TTITLES.forEach(function(filter){
+        $('a'+getFilterTitleSelector(filter)).closest('ytd-grid-video-renderer').remove();
+    });
 
     $.each($("ytd-grid-video-renderer"),function(index,element) {
         var e = $(element);
@@ -119,12 +217,14 @@ function hideWatched() {
         if(itemId.indexOf('?')>-1) {
             itemId.substring(0,itemId.indexOf('?'));
         }
-        if(isHidden(itemId)) {
+        if(isFilteredId(itemId)) {
             e.remove();
         } else {
             if(!e.hasClass("dhdone")) {
                 var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
-                a.click(function(){hide(itemId,true);});
+                a.click(function(){
+                    filterId(itemId);
+                });
                 e.append(a);
                 e.addClass("dhdone");
             }
@@ -132,5 +232,5 @@ function hideWatched() {
     });
 }
 
-importFromMango();
+importFromMlab();
 setInterval(hideWatched,1000);
