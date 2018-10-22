@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name            DH - Youtube hide video 2.0
+// @name            DH - Youtube hide video 2.1
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.0
+// @version         2.1
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -15,7 +15,10 @@
 // ==/UserScript==
 
 console.log("DH - Youtube hide video 2 : loaded !");
-console.log("Call mlabLogin(database,apiKey) to connect to mlab (it will import old data)");
+
+
+
+
 
 // ----------------- USERSCRIPT UTILS -----------------
 
@@ -48,6 +51,7 @@ unsafeWindow.mlabLogin = function(database,apiKey) {
 };
 
 function mlabIsLogged() {
+    //console.log(getScriptParam(MLAB_APIKEY_KEY),getScriptParam(MLAB_DATABASE_KEY));
     return hasScriptParam(MLAB_APIKEY_KEY) && hasScriptParam(MLAB_DATABASE_KEY);
 }
 
@@ -116,7 +120,7 @@ function filterId(id) {
 
     var filter = {'_id':id,'date':new Date().toISOString()};
     FILTERED_IDS += id+",";
-    
+
     mlabAddDocumentToCollection(MLAB_COLLECTION_IDS,filter)
 }
 
@@ -136,14 +140,18 @@ var MLAB_COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
 var FILTERED_TTITLES = [];
 
 // title can be a string or an array
-unsafeWindow.filterTitle = function(title) {
+// youtuber is optionnal
+unsafeWindow.filterTitle = function(title,youtuber) {
     if(!Array.isArray(title)) {
         title = [title];
     }
 
     var filter = {'parts':title,'date':new Date().toISOString()};
+    if(youtuber) {
+        filter.youtuber = youtuber;
+    }
     FILTERED_TTITLES.push(filter);
-    
+
     mlabAddDocumentToCollection(MLAB_COLLECTION_TITLES,filter);
 }
 
@@ -206,7 +214,19 @@ function hideWatched() {
     $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer').remove();
 
     FILTERED_TTITLES.forEach(function(filter){
-        $('a'+getFilterTitleSelector(filter)).closest('ytd-grid-video-renderer').remove();
+        var titleFiltered = $('a'+getFilterTitleSelector(filter)).closest('ytd-grid-video-renderer')
+        if(filter.youtuber) {
+            $.each(titleFiltered,function(index,element) {
+                var e = $(element);
+                var youtuberElement = e.find('yt-formatted-string[title='+filter.youtuber+']');
+                //debugger;
+                if(youtuberElement.length>0) {
+                    e.remove();
+                }
+            });
+        } else {
+            titleFiltered.remove();
+        }
     });
 
     $.each($("ytd-grid-video-renderer"),function(index,element) {
