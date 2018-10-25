@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video 2.2
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.2
+// @version         2.2.1
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -301,21 +301,23 @@ var SHOW_BUTTONS = 3;
 unsafeWindow.addHideSeriesButtons = function() {
 	$('.removeSeries').remove();
 
-	var youtuber = getChannelYoutuber();
 	var stats = {};
 
 	$.each($("ytd-grid-video-renderer"),function(index,element) {
-        var e = $(element);
-        if(!youtuber || youtuber.length==0) {
-        	youtuber = getVideoYoutuber(e);
-        }
-        if(!stats[youtuber]) {
-        	stats[youtuber] = getStats(youtuber);
-        }
 
-        var title = getVideoTitle(e);
-        var showed = 0;
         setTimeout(function(){
+        	var e = $(element);
+	        var youtuber = getVideoYoutuber(e);
+			if(!youtuber || youtuber.length==0) {
+	        	youtuber = getChannelYoutuber();
+	        }
+	        if(!stats[youtuber]) {
+	        	stats[youtuber] = getStats(youtuber);
+	        }
+
+	        var title = getVideoTitle(e);
+	        var showed = 0;
+
         	for(var i=0;showed<SHOW_BUTTONS && i<stats[youtuber].length;i++) {
 	        	if($.inArray(title,stats[youtuber][i].titles)!=-1) {
 	        		var str = stats[youtuber][i].string;
