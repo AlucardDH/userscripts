@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video 2.2
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.2.3
+// @version         2.2.3b
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -243,7 +243,7 @@ function importFromMlab() {
 var TITLES = {};
 
 function isVideoWatched(item) {
-	var indicators = item.find("ytd-thumbnail-overlay-playback-status-renderer","ytd-thumbnail-overlay-resume-playback-renderer");
+	var indicators = item.find("ytd-thumbnail-overlay-playback-status-renderer,ytd-thumbnail-overlay-resume-playback-renderer");
 	return indicators!=null && indicators.length>0;
 }
 
