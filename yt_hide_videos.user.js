@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video 2.2
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.2.1
+// @version         2.2.2
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -82,11 +82,39 @@ function mlabGetCollection(collection,onSuccess) {
     GM_xmlhttpRequest({
         method: "GET",
         responseType :"json",
-        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey(),
+        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey()+"&l=10000",
         onload:  function(result) {
             var data = result.response;
             console.log(data);
-            onSuccess(data);
+            if(onSuccess) {
+	            onSuccess(data);
+	        }
+        }
+    });
+}
+
+function mlabDeleteDocuments(collection,query,onSuccess) {
+    if(!mlabIsLogged()) {
+        return;
+    }
+    if(!query) {
+    	return;
+    }
+
+    GM_xmlhttpRequest({
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        responseType :"json",
+        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey()+"&q="+JSON.stringify(query),
+        data:"[]",
+        onload:  function(result) {
+            var data = result.response;
+            console.log(data);
+            if(onSuccess) {
+	            onSuccess(data);
+	        }
         }
     });
 }
@@ -103,7 +131,9 @@ function mlabGetDocument(collection,documentId,onSuccess) {
         onload:  function(result) {
             var data = result.response;
             console.log(data);
-            onSuccess(data);
+            if(onSuccess) {
+	            onSuccess(data);
+	        }
         }
     });
 }
@@ -113,12 +143,16 @@ function mlabGetDocument(collection,documentId,onSuccess) {
 var MLAB_COLLECTION_IDS = SCRIPT_BASE+"_IDS";
 var FILTERED_IDS = "";
 
-function filterId(id) {
+function filterId(id,watched) {
     if(isFilteredId(id)) {
         return;
     }
 
     var filter = {'_id':id,'date':new Date().toISOString()};
+    if(watched) {
+    	filter.watched = true;
+    }
+
     FILTERED_IDS += id+",";
 
     mlabAddDocumentToCollection(MLAB_COLLECTION_IDS,filter)
@@ -208,6 +242,14 @@ function importFromMlab() {
 // ----------------- STATS -----------------
 var TITLES = {};
 
+function getVideoId(item) {
+	var itemId = $(item.find('a')[0]).attr("href");
+    itemId = itemId.substring(itemId.indexOf('=')+1);
+    if(itemId.indexOf('&')>-1) {
+    	itemId = itemId.substring(0,itemId.indexOf('&'));
+    }
+    return itemId;
+}
 
 function getVideoYoutuber(item) {
 	var elements = item.find('#byline');
@@ -339,8 +381,27 @@ unsafeWindow.addHideSeriesButtons = function() {
 // ----------------- APPLY FILTERS -----------------
 
 function hideViewed() {
-    $("ytd-thumbnail-overlay-playback-status-renderer").closest('ytd-grid-video-renderer').remove();
-    $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer').remove();
+
+	var watched = $("ytd-thumbnail-overlay-playback-status-renderer").closest('ytd-grid-video-renderer')
+    $.each(watched,function(index,element){
+    	var e = $(element);
+        var itemId = getVideoId(e);
+        if(!isFilteredId(itemId)) {
+        	filterId(itemId,true);
+        }
+    });
+    watched.remove();
+
+
+    watched = $("ytd-thumbnail-overlay-resume-playback-renderer").closest('ytd-grid-video-renderer');
+    $.each(watched,function(index,element){
+    	var e = $(element);
+        var itemId = getVideoId(e);
+        if(!isFilteredId(itemId)) {
+        	filterId(itemId,true);
+        }
+    });
+    watched.remove();
 }
 
 function hideFilteredTitles() {
@@ -365,11 +426,8 @@ function hideFilteredIds(statsOnly) {
 
     $.each($("ytd-grid-video-renderer"),function(index,element) {
         var e = $(element);
-        var itemId = $(e.find('a')[0]).attr("href");
-        itemId.substring(itemId.indexOf('=')+1);
-        if(itemId.indexOf('?')>-1) {
-            itemId.substring(0,itemId.indexOf('?'));
-        }
+        var itemId = getVideoId(e);
+
         if(!e.hasClass("dhdone")) {
             addStats(e);
             newStats = true;
