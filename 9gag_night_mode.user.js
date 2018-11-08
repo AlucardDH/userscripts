@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name			DH - 9gag night mode
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1.2
+// @version			0.1.3
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
 // @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
-// @grant		 GM_addStyle
+// @grant		    GM_addStyle
 // ==/UserScript==
 
 console.log("DH - 9gag night mode : loaded !");
@@ -25,7 +25,8 @@ function styleToString(style) {
 	return result;
 }
 
-GM_addStyle(styleToString({selector:"body","background":"black"}));
+GM_addStyle(styleToString({selector:"body","background-color":"#141414 !important"}));
+
 GM_addStyle(styleToString({selector:"div","background":"transparent !important","color":"white"}));
 GM_addStyle(styleToString({selector:"a","color":"white !important"}));
 GM_addStyle(styleToString({selector:"h1","color":"white !important"}));
@@ -35,12 +36,10 @@ GM_addStyle(styleToString({selector:".share","display":"none"}));
 GM_addStyle(styleToString({selector:"a.btn","background":"black !important","color":"white"}));
 GM_addStyle(styleToString({selector:".notification-list li *","background":"black !important"}));
 
-setTimeout(function(){
-    GM_addStyle(styleToString({selector:"body","background-image":"url('http://colourlovers.com.s3.amazonaws.com/images/patterns/2/2875.png?1197341146')"}));
-    $("#sidebar-content").remove();
-},100);
-
 setInterval(function() {
-	$('video').attr('controls','true');
+    $("#sidebar-content").remove();
+    $('video').attr('controls','true');
 },100);
-
+$(function(){
+    GM_addStyle(styleToString({selector:"body","background-image":"url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAAAAABVxyezAAAACXBIWXMAAABIAAAASABGyWs+AAAAiElEQVQ4y9VUQQrAMAjLxU/4/4eOdUisKLa3KaxUSUJs6yD6hoisz8dXgytoAKwcO1405gS41efnCqWHtgtJ2VSBcSPfNEB2AlgeOoXeQ3oC3KPq3wLVCRJQ3MG5QutBUz5r0JRNlQ3g+aaxA4LKvULjwfO4nzEXF138+i7aFzVgLtrpnvCPegA6UHyBw8URxgAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAASUVORK5CYII=)"}));
+});
