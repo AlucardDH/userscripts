@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name            DH - Youtube hide video 2.2
+// @name            DH - Youtube hide video 2.3
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.2.3b
+// @version         2.3
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2 : loaded !");
+console.log("DH - Youtube hide video 2.3 : loaded !");
 
 
 
@@ -304,7 +304,7 @@ unsafeWindow.getStats = function(youtuber) {
     			if(results[subTitle]) {
     				continue;
     			}
-                
+
     			results[subTitle] = {
     				string:subTitle,
     				count:1,
@@ -385,7 +385,15 @@ unsafeWindow.addHideSeriesButtons = function() {
 
 // ----------------- APPLY FILTERS -----------------
 
-function hideFilteredTitles() {
+function hideJQueryGroup(group,subscriptions) {
+    if(subscriptions) {
+        group.remove();
+    } else {
+        group.attr('style','opacity:0.25 !important;');
+    }
+}
+
+function hideFilteredTitles(subscriptions) {
     FILTERED_TTITLES.forEach(function(filter){
         var titleFiltered = $('a'+getFilterTitleSelector(filter)).closest('ytd-grid-video-renderer')
         if(filter.youtuber) {
@@ -393,16 +401,16 @@ function hideFilteredTitles() {
                 var e = $(element);
                 var youtuber = getVideoYoutuber(e);
                 if(youtuber==filter.youtuber) {
-                    e.remove();
+                    hideJQueryGroup(e,subscriptions);
                 }
             });
         } else {
-            titleFiltered.remove();
+            hideJQueryGroup(titleFiltered,subscriptions);
         }
     });
 }
 
-function hideWatchedAndFilteredIds(statsOnly) {
+function hideWatchedAndFilteredIds(subscriptions) {
     var newStats = false;
 
     $.each($("ytd-grid-video-renderer"),function(index,element) {
@@ -410,12 +418,10 @@ function hideWatchedAndFilteredIds(statsOnly) {
         var itemId = getVideoId(e);
 
         // stats first
-        if(!e.hasClass("dhdone")) {
+        if(!e.hasClass("dhdone_stats")) {
             addStats(e);
             newStats = true;
-            if(statsOnly) {
-                e.addClass("dhdone");
-            }
+            e.addClass("dhdone_stats");
         }
 
         // save and hide watched
@@ -424,29 +430,24 @@ function hideWatchedAndFilteredIds(statsOnly) {
         	if(!isFilteredId(itemId)) {
 	        	filterId(itemId,true);
 	        }
-	        if(!statsOnly) {
-	        	e.remove();
-	        }
-	        
+	        hideJQueryGroup(e,subscriptions);
         }
 
-        
 
-        if(!statsOnly) {
-        	// hide filtered
-            if(isFilteredId(itemId)) {
-                e.remove();
+        // hide filtered
+        if(isFilteredId(itemId)) {
+            hideJQueryGroup(e,subscriptions);
 
             // show button to hide
-            } else {
-                if(!e.hasClass("dhdone")) {
-                    var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
-                    a.click(function(){
-                        filterId(itemId);
-                    });
-                    e.append(a);
-                    e.addClass("dhdone");
-                }
+        } else {
+            if(!e.hasClass("dhdone")) {
+                var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
+                a.click(function(){
+                    filterId(itemId);
+                    a.remove();
+                });
+                e.append(a);
+                e.addClass("dhdone");
             }
         }
     });
@@ -457,10 +458,8 @@ function hideWatchedAndFilteredIds(statsOnly) {
 function hideWatched() {
     var subscriptions = window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')>-1;
 
-    if(subscriptions) {
-    	hideFilteredTitles();
-    }
-    hideWatchedAndFilteredIds(!subscriptions);
+    hideFilteredTitles(subscriptions);
+    hideWatchedAndFilteredIds(subscriptions);
 }
 
 importFromMlab();
