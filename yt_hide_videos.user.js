@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name            DH - Youtube hide video 2.3
+// @name            DH - Youtube hide video 2.4
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.3
+// @version         2.4
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,10 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.3 : loaded !");
-
-
-
+console.log("DH - Youtube hide video 2.4 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -444,7 +441,7 @@ function hideWatchedAndFilteredIds(subscriptions) {
                 var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
                 a.click(function(){
                     filterId(itemId);
-                    a.remove();
+                    e.remove();
                 });
                 e.append(a);
                 e.addClass("dhdone");
@@ -455,6 +452,11 @@ function hideWatchedAndFilteredIds(subscriptions) {
     if(newStats) console.log(TITLES);
 }
 
+importFromMlab();
+
+var previousHeight = 0;
+var interval = null;
+
 function hideWatched() {
     var subscriptions = window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')>-1;
 
@@ -462,5 +464,22 @@ function hideWatched() {
     hideWatchedAndFilteredIds(subscriptions);
 }
 
-importFromMlab();
-setInterval(hideWatched,1000);
+function checkPageUpdate() {
+	var currentHeight = document.documentElement.scrollHeight;
+	if(previousHeight!=currentHeight) {
+        stop();
+		previousHeight = currentHeight;
+		hideWatched();
+        start();
+	}
+}
+
+function start() {
+    interval = setInterval(checkPageUpdate,500);
+}
+
+function stop() {
+    clearInterval(interval);
+}
+
+start();
