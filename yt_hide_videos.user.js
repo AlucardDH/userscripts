@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name            DH - Youtube hide video 2.4
+// @name            DH - Youtube hide video 2.5
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.4
+// @version         2.5
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.4 : loaded !");
+console.log("DH - Youtube hide video 2.5 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -84,8 +84,8 @@ function mlabGetCollection(collection,onSuccess) {
             var data = result.response;
             console.log(data);
             if(onSuccess) {
-	            onSuccess(data);
-	        }
+                onSuccess(data);
+            }
         }
     });
 }
@@ -95,7 +95,7 @@ function mlabDeleteDocuments(collection,query,onSuccess) {
         return;
     }
     if(!query) {
-    	return;
+        return;
     }
 
     GM_xmlhttpRequest({
@@ -110,8 +110,8 @@ function mlabDeleteDocuments(collection,query,onSuccess) {
             var data = result.response;
             console.log(data);
             if(onSuccess) {
-	            onSuccess(data);
-	        }
+                onSuccess(data);
+            }
         }
     });
 }
@@ -129,8 +129,8 @@ function mlabGetDocument(collection,documentId,onSuccess) {
             var data = result.response;
             console.log(data);
             if(onSuccess) {
-	            onSuccess(data);
-	        }
+                onSuccess(data);
+            }
         }
     });
 }
@@ -147,7 +147,7 @@ function filterId(id,watched) {
 
     var filter = {'_id':id,'date':new Date().toISOString()};
     if(watched) {
-    	filter.watched = true;
+        filter.watched = true;
     }
 
     FILTERED_IDS += id+",";
@@ -240,32 +240,32 @@ function importFromMlab() {
 var TITLES = {};
 
 function isVideoWatched(item) {
-	var indicators = item.find("ytd-thumbnail-overlay-playback-status-renderer,ytd-thumbnail-overlay-resume-playback-renderer");
-	return indicators!=null && indicators.length>0;
+    var indicators = item.find("ytd-thumbnail-overlay-playback-status-renderer,ytd-thumbnail-overlay-resume-playback-renderer");
+    return indicators!=null && indicators.length>0;
 }
 
 function getVideoId(item) {
-	var itemId = $(item.find('a')[0]).attr("href");
+    var itemId = $(item.find('a')[0]).attr("href");
     itemId = itemId.substring(itemId.indexOf('=')+1);
     if(itemId.indexOf('&')>-1) {
-    	itemId = itemId.substring(0,itemId.indexOf('&'));
+        itemId = itemId.substring(0,itemId.indexOf('&'));
     }
     return itemId;
 }
 
 function getVideoYoutuber(item) {
-	var elements = item.find('#byline');
+    var elements = item.find('#byline');
     return elements!=null && elements.length>0 ? $(elements[0]).attr("title") : null;
 }
 
 function getVideoTitle(item) {
-	var elements = item.find('#video-title');
+    var elements = item.find('#video-title');
     return elements!=null && elements.length>0 ? $(elements[0]).attr("title").toLowerCase() : null;
 }
 
 function getChannelYoutuber() {
-	var elements = $('#channel-title');
-	return elements!=null && elements.length>0 ? $('#channel-title')[0].innerText : null;
+    var elements = $('#channel-title');
+    return elements!=null && elements.length>0 ? $('#channel-title')[0].innerText : null;
 }
 
 function addStats(item) {
@@ -283,9 +283,9 @@ function addStats(item) {
 
 
 unsafeWindow.getStats = function(youtuber) {
-	if(!youtuber) {
-		youtuber = getChannelYoutuber();
-	}
+    if(!youtuber) {
+        youtuber = getChannelYoutuber();
+    }
 
     if(!TITLES[youtuber]) {
         return [];
@@ -295,44 +295,44 @@ unsafeWindow.getStats = function(youtuber) {
     var resultsToSort = [];
 
     TITLES[youtuber].forEach(function(title1) {
-    	for(var iEnd=title1.length;iEnd>3;iEnd--) {
-    		for(var iStart=0;iStart<iEnd-3;iStart++) {
-    			var subTitle = title1.substring(iStart,iEnd);
-    			if(results[subTitle]) {
-    				continue;
-    			}
+        for(var iEnd=title1.length;iEnd>3;iEnd--) {
+            for(var iStart=0;iStart<iEnd-3;iStart++) {
+                var subTitle = title1.substring(iStart,iEnd);
+                if(results[subTitle]) {
+                    continue;
+                }
 
-    			results[subTitle] = {
-    				string:subTitle,
-    				count:1,
-    				titles:[title1]
-    			};
+                results[subTitle] = {
+                    string:subTitle,
+                    count:1,
+                    titles:[title1]
+                };
 
-    			TITLES[youtuber].forEach(function(title2) {
-    				if(title2!=title1 && title2.indexOf(subTitle)>-1) {
-    					results[subTitle].count++;
-    					results[subTitle].titles.push(title2);
-    				}
-    			});
+                TITLES[youtuber].forEach(function(title2) {
+                    if(title2!=title1 && title2.indexOf(subTitle)>-1) {
+                        results[subTitle].count++;
+                        results[subTitle].titles.push(title2);
+                    }
+                });
 
-    			var skip = false;
-    			for(var iSearch=resultsToSort.length-1;iSearch>-1;iSearch--) {
-    				if(skip) continue;
-    				var previous = resultsToSort[iSearch];
-    				if(previous.string.indexOf(subTitle)>-1 && results[subTitle].count==previous.count) {
-    					skip = true;
-    				}
-    			}
+                var skip = false;
+                for(var iSearch=resultsToSort.length-1;iSearch>-1;iSearch--) {
+                    if(skip) continue;
+                    var previous = resultsToSort[iSearch];
+                    if(previous.string.indexOf(subTitle)>-1 && results[subTitle].count==previous.count) {
+                        skip = true;
+                    }
+                }
 
-    			if(!skip && results[subTitle].count>1) {
-    				resultsToSort.push(results[subTitle]);
-    			}
-    		}
-    	}
+                if(!skip && results[subTitle].count>1) {
+                    resultsToSort.push(results[subTitle]);
+                }
+            }
+        }
     });
 
     var weight = function(obj) {
-    	return obj.count*obj.string.length;
+        return obj.count*obj.string.length;
     };
     resultsToSort.sort(function(a, b){
         return weight(b) - weight(a);
@@ -343,39 +343,39 @@ unsafeWindow.getStats = function(youtuber) {
 
 var SHOW_BUTTONS = 3;
 unsafeWindow.addHideSeriesButtons = function() {
-	$('.removeSeries').remove();
+    $('.removeSeries').remove();
 
-	var stats = {};
+    var stats = {};
 
-	$.each($("ytd-grid-video-renderer"),function(index,element) {
+    $.each($("ytd-grid-video-renderer"),function(index,element) {
 
         setTimeout(function(){
-        	var e = $(element);
-	        var youtuber = getVideoYoutuber(e);
-			if(!youtuber || youtuber.length==0) {
-	        	youtuber = getChannelYoutuber();
-	        }
-	        if(!stats[youtuber]) {
-	        	stats[youtuber] = getStats(youtuber);
-	        }
+            var e = $(element);
+            var youtuber = getVideoYoutuber(e);
+            if(!youtuber || youtuber.length==0) {
+                youtuber = getChannelYoutuber();
+            }
+            if(!stats[youtuber]) {
+                stats[youtuber] = getStats(youtuber);
+            }
 
-	        var title = getVideoTitle(e);
-	        var showed = 0;
+            var title = getVideoTitle(e);
+            var showed = 0;
 
-        	for(var i=0;showed<SHOW_BUTTONS && i<stats[youtuber].length;i++) {
-	        	if($.inArray(title,stats[youtuber][i].titles)!=-1) {
-	        		var str = stats[youtuber][i].string;
-	        		//ytd-subscribe-button-renderer
-					var a = $('<paper-button class=" removeSeries" subscribed style="display:inline-block;" title="'+str+'">Cacher "'+str+'"</paper-button>');
-	                a.click(function(e){
-	                    filterTitle(e.target.title,youtuber);
-	                });
-	                e.append(a);
-	                showed++;
-	        	}
-	        }
-	        console.log('Done :',title);
-	    },10);
+            for(var i=0;showed<SHOW_BUTTONS && i<stats[youtuber].length;i++) {
+                if($.inArray(title,stats[youtuber][i].titles)!=-1) {
+                    var str = stats[youtuber][i].string;
+                    //ytd-subscribe-button-renderer
+                    var a = $('<paper-button class=" removeSeries" subscribed style="display:inline-block;" title="'+str+'">Cacher "'+str+'"</paper-button>');
+                    a.click(function(e){
+                        filterTitle(e.target.title,youtuber);
+                    });
+                    e.append(a);
+                    showed++;
+                }
+            }
+            console.log('Done :',title);
+        },10);
     });
 }
 
@@ -424,10 +424,10 @@ function hideWatchedAndFilteredIds(subscriptions) {
         // save and hide watched
         var watched = isVideoWatched(e);
         if(watched) {
-        	if(!isFilteredId(itemId)) {
-	        	filterId(itemId,true);
-	        }
-	        hideJQueryGroup(e,subscriptions);
+            if(!isFilteredId(itemId)) {
+                filterId(itemId,true);
+            }
+            hideJQueryGroup(e,subscriptions);
         }
 
 
@@ -438,10 +438,12 @@ function hideWatchedAndFilteredIds(subscriptions) {
             // show button to hide
         } else {
             if(!e.hasClass("dhdone")) {
-                var a = $('<paper-button class="ytd-subscribe-button-renderer" subscribed style="display:inline-block;">Cacher</paper-button>');
-                a.click(function(){
-                    filterId(itemId);
-                    e.remove();
+                var a = $('<paper-button class="ytd-subscribe-button-renderer" meta-id="'+itemId+'" subscribed style="display:inline-block;">Cacher</paper-button>');
+                a.click(function(event){
+                    var source = event.target || event.srcElement;
+                    var itemIdTemp = $(source).attr('meta-id');
+                    filterId(itemIdTemp);
+                    hideWatched();
                 });
                 e.append(a);
                 e.addClass("dhdone");
@@ -457,6 +459,9 @@ importFromMlab();
 var previousHeight = 0;
 var interval = null;
 
+var FORCE__REFRESH_COUNT = 10;
+var counter = 0;
+
 function hideWatched() {
     var subscriptions = window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')>-1;
 
@@ -465,13 +470,14 @@ function hideWatched() {
 }
 
 function checkPageUpdate() {
-	var currentHeight = document.documentElement.scrollHeight;
-	if(previousHeight!=currentHeight) {
+    var currentHeight = document.documentElement.scrollHeight;
+    counter++;
+    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
         stop();
-		previousHeight = currentHeight;
-		hideWatched();
+        previousHeight = currentHeight;
+        hideWatched();
         start();
-	}
+    }
 }
 
 function start() {
@@ -479,6 +485,7 @@ function start() {
 }
 
 function stop() {
+    counter = 0;
     clearInterval(interval);
 }
 
