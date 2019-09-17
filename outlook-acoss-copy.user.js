@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         DH - Outlook - auto copy Acoss Pin
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Outlook - auto copy Acoss Pin
 // @author       Damien Hembert
 // @match        https://outlook.office365.com/mail/inbox
+// @match        https://outlook.office.com/mail/inbox
 // @require 	 https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant        GM_setClipboard
 // ==/UserScript==
@@ -24,7 +25,7 @@ function getMailTitle(element) {
 }
 
 function getMailsList() {
-    return $('div[role="listbox"][aria-label="Liste des messages"]');
+    return $('div[role="listbox"]');
 }
 
 function getAcossPin() {
