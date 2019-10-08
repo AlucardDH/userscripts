@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.4
+// @version			0.5
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -10,6 +10,7 @@
 // @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @grant           unsafeWindow
 // ==/UserScript==
 
 console.log("DH - 9gag hide voted : loaded !");
@@ -30,9 +31,37 @@ function hasScriptParam(key) {
     return getScriptParam(key);
 }
 
+// ----------------- VOTED -----------------
+
+var PARAM_IDS = 'IDS';
+var FILTERED_IDS = "";
+
+function importFilteredIds() {
+    FILTERED_IDS = getScriptParam(PARAM_IDS);
+    if(!FILTERED_IDS) {
+    	FILTERED_IDS = '';
+    }
+    console.log(FILTERED_IDS);
+}
+
+function isFilteredId(id) {
+    return FILTERED_IDS.indexOf(id)!=-1;
+}
+
+function filterId(id) {
+    if(!id) {
+        return;
+    }
+    if(isFilteredId(id)) {
+        return;
+    }
+    FILTERED_IDS += id+",";
+    setScriptParam(PARAM_IDS,FILTERED_IDS);
+}
 
 
 // ------------- VIDEO -------------
+
 var SHOW_VIDEOS = 'showVideos';
 function showVideo() {
     var value = getScriptParam(SHOW_VIDEOS);
@@ -56,6 +85,11 @@ unsafeWindow.hideVideos = function() {
     }
 };
 
+function getId(article) {
+    if(article.id)
+    return article.id ? article.id.replace('jsid-post-','') : null;
+}
+
 var NEXT_CLEAN = null;
 
 function hideVoted() {
@@ -67,6 +101,10 @@ function hideVoted() {
         NEXT_CLEAN.remove();
     }
     NEXT_CLEAN = $(".active").closest('article');
+    NEXT_CLEAN.each(function(index,article) {
+        filterId(getId(article));
+    });
+
     if($(".badge-entry-collection").text().trim()=="") {
         $(".badge-entry-collection").css("height","100px");
     }
@@ -77,4 +115,50 @@ function hideVoted() {
 
 $("#sidebar-content").remove();
 
+// we have to overwrite the original XMLHttpRequest with our own version of it
+unsafeWindow.XMLHttpRequest = class extends XMLHttpRequest {// by extending, we copy over all the original functionality
+
+  send() { // we overwrite the send function
+
+    // then we proxy the onreadystatechange property
+    this._onreadystatechange = this.onreadystatechange;
+    this.onreadystatechange = () => {
+
+      // Do your stuff here!
+      //console.log('Ready State: ' + this.readyState);
+      if (typeof this._onreadystatechange === 'function') {
+         /// console.log('function',this);
+          if(this.responseText)  {
+              try {
+                  var json = JSON.parse(this.responseText);
+                  if(json.data && json.data.posts) {
+                      var filtered = [];
+                      json.data.posts.forEach(function(p) {
+                          if(!isFilteredId(p.id) && (showVideo() || p.type!='Animated')) {
+                              filtered.push(p);
+                          }
+                      });
+                      //console.log('Filtered !',json.data.posts,filtered);
+                      json.data.posts = filtered;
+
+                      Object.defineProperty(this, "responseText", {writable: true});
+                      Object.defineProperty(this, "response", {writable: true});
+
+                      this.responseText = JSON.stringify(json);
+                      this.response = json;
+                  }
+              } catch(e) {
+                  debugger;
+              }
+          }
+
+        this._onreadystatechange();// call original event handler
+      }
+    };
+
+    super.send();// finally, we call the original send function
+  };
+};
+
+importFilteredIds();
 setInterval(hideVoted,1000);
