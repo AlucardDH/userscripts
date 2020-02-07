@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.5.1
+// @version         2.5.2
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.5.1 : loaded !");
+console.log("DH - Youtube hide video 2.5.2 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -67,7 +67,11 @@ function mlabAddDocumentToCollection(collection,document) {
             "Content-Type": "application/json"
         },
         url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey(),
-        data: JSON.stringify(document)
+        data: JSON.stringify(document),
+        onload:  function(result) {
+            var data = result.response;
+            console.log(data);
+        }
     });
 }
 
@@ -139,6 +143,7 @@ function mlabGetDocument(collection,documentId,onSuccess) {
 
 var MLAB_COLLECTION_IDS = SCRIPT_BASE+"_IDS";
 var FILTERED_IDS = "";
+var IMPORTED_FILTERED_IDS = false; 
 
 function filterId(id,watched) {
     if(isFilteredId(id)) {
@@ -164,11 +169,13 @@ function importFilteredIds() {
         result.forEach(function(filter){
             FILTERED_IDS += filter['_id']+",";
         });
+        IMPORTED_FILTERED_IDS = true;
     });
 }
 
 var MLAB_COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
 var FILTERED_TTITLES = [];
+var IMPORTED_FILTERED_TTITLES = false; 
 
 // title can be a string or an array
 // youtuber is optionnal
@@ -205,6 +212,7 @@ function importFilteredTitles() {
         result.forEach(function(filter){
             FILTERED_TTITLES.push(filter);
         });
+        IMPORTED_FILTERED_TTITLES = true;
     });
 }
 
@@ -470,14 +478,16 @@ function hideWatched() {
 }
 
 function checkPageUpdate() {
-    var currentHeight = document.documentElement.scrollHeight;
-    counter++;
-    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
-        stop();
-        previousHeight = currentHeight;
-        hideWatched();
-        start();
-    }
+	if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES) {
+	    var currentHeight = document.documentElement.scrollHeight;
+	    counter++;
+	    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
+	        stop();
+	        previousHeight = currentHeight;
+	        hideWatched();
+	        start();
+	    }
+	}
 }
 
 function start() {
