@@ -5,6 +5,9 @@
 // @version      0.1
 // @description  Enregistrer et charger des configration Hawai
 // @author       Damien Hembert
+// @projectPage     https://github.com/AlucardDH/userscripts
+// @downloadURL     https://github.com/AlucardDH/userscripts/raw/master/hawai_properties_loader.user.js
+// @updateURL       https://github.com/AlucardDH/userscripts/raw/master/hawai_properties_loader.user.js
 // @match        http://*/hwi-install/edit_properties.cgi*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant        GM_getValue
