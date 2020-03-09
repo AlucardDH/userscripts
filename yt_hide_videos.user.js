@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.5.2
+// @version         2.5.3
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.5.2 : loaded !");
+console.log("DH - Youtube hide video 2.5.3 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -143,7 +143,7 @@ function mlabGetDocument(collection,documentId,onSuccess) {
 
 var MLAB_COLLECTION_IDS = SCRIPT_BASE+"_IDS";
 var FILTERED_IDS = "";
-var IMPORTED_FILTERED_IDS = false; 
+var IMPORTED_FILTERED_IDS = false;
 
 function filterId(id,watched) {
     if(isFilteredId(id)) {
@@ -175,7 +175,7 @@ function importFilteredIds() {
 
 var MLAB_COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
 var FILTERED_TTITLES = [];
-var IMPORTED_FILTERED_TTITLES = false; 
+var IMPORTED_FILTERED_TTITLES = false;
 
 // title can be a string or an array
 // youtuber is optionnal
@@ -446,7 +446,7 @@ function hideWatchedAndFilteredIds(subscriptions) {
             // show button to hide
         } else {
             if(!e.hasClass("dhdone")) {
-                var a = $('<paper-button class="ytd-subscribe-button-renderer" meta-id="'+itemId+'" subscribed style="display:inline-block;">Cacher</paper-button>');
+                var a = $('<paper-button class="ytd-subscribe-button-renderer dhbutton" meta-id="'+itemId+'" subscribed style="display:inline-block;">Cacher</paper-button>');
                 a.click(function(event){
                     var source = event.target || event.srcElement;
                     var itemIdTemp = $(source).attr('meta-id');
@@ -462,6 +462,12 @@ function hideWatchedAndFilteredIds(subscriptions) {
     if(newStats) console.log(TITLES);
 }
 
+function clean(thumbnails) {
+    thumbnails.removeClass('dhdone');
+    thumbnails.removeClass('dhdone_stats');
+    thumbnails.attr('style','');
+}
+
 importFromMlab();
 
 var previousHeight = 0;
@@ -469,9 +475,10 @@ var interval = null;
 
 var FORCE__REFRESH_COUNT = 10;
 var counter = 0;
+var previousUrl;
 
-function hideWatched() {
-    var subscriptions = window.location.href.indexOf('https://www.youtube.com/feed/subscriptions')>-1;
+function hideWatched(url) {
+    var subscriptions = url.indexOf('https://www.youtube.com/feed/subscriptions')>-1;
 
     hideFilteredTitles(subscriptions);
     hideWatchedAndFilteredIds(subscriptions);
@@ -479,12 +486,23 @@ function hideWatched() {
 
 function checkPageUpdate() {
 	if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES) {
+        var url = window.location.href;
+        if(previousUrl!=url) {
+            var thumbnails = $("ytd-grid-video-renderer");
+            if(thumbnails.length>0) {
+                console.log('Page change',url);
+                clean(thumbnails);
+                $("dhbutton").remove();
+                previousUrl = url;
+            }
+        }
+
 	    var currentHeight = document.documentElement.scrollHeight;
 	    counter++;
 	    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
 	        stop();
 	        previousHeight = currentHeight;
-	        hideWatched();
+	        hideWatched(url);
 	        start();
 	    }
 	}
