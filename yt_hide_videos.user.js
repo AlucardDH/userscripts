@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.5.3
+// @version         2.5.4
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.5.3 : loaded !");
+console.log("DH - Youtube hide video 2.5.4 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -491,8 +491,8 @@ function checkPageUpdate() {
             var thumbnails = $("ytd-grid-video-renderer");
             if(thumbnails.length>0) {
                 console.log('Page change',url);
+                $(".dhbutton").remove();
                 clean(thumbnails);
-                $("dhbutton").remove();
                 previousUrl = url;
             }
         }
