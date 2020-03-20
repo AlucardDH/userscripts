@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.5
+// @version			0.6
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -90,19 +90,25 @@ function getId(article) {
     return article.id ? article.id.replace('jsid-post-','') : null;
 }
 
-var NEXT_CLEAN = null;
-
+var MAX_PASS = 5;
+var PREVIOUS_PASS = {};
 function hideVoted() {
     $('article:not([id])').remove();
 
     $('.ora-player-container').closest('article').remove();
 
-    if(NEXT_CLEAN) {
-        NEXT_CLEAN.remove();
-    }
-    NEXT_CLEAN = $(".active").closest('article');
-    NEXT_CLEAN.each(function(index,article) {
-        filterId(getId(article));
+    var clean = $(".active").closest('article');
+    clean.each(function(index,article) {
+        var id = getId(article);
+        if(isFilteredId(id)) {
+            article.remove();
+        } else if(!PREVIOUS_PASS['id_'+id]) {
+            PREVIOUS_PASS['id_'+id] = MAX_PASS;
+        } else if(PREVIOUS_PASS['id_'+id]==1) {
+            filterId(id);
+        } else {
+            PREVIOUS_PASS['id_'+id]--;
+        }
     });
 
     if($(".badge-entry-collection").text().trim()=="") {
@@ -115,23 +121,18 @@ function hideVoted() {
 
 $("#sidebar-content").remove();
 
-// we have to overwrite the original XMLHttpRequest with our own version of it
-unsafeWindow.XMLHttpRequest = class extends XMLHttpRequest {// by extending, we copy over all the original functionality
-
-  send() { // we overwrite the send function
-
-    // then we proxy the onreadystatechange property
-    this._onreadystatechange = this.onreadystatechange;
-    this.onreadystatechange = () => {
-
-      // Do your stuff here!
-      //console.log('Ready State: ' + this.readyState);
-      if (typeof this._onreadystatechange === 'function') {
-         /// console.log('function',this);
-          if(this.responseText)  {
+var origOpen = XMLHttpRequest.prototype.open;
+unsafeWindow.XMLHttpRequest.prototype.open = function() {
+    this.addEventListener('loadend', function() {
+        // if status 2x and responseText...
+        console.log('request loadend');
+        console.log(this);
+        if(this.responseText)  {
               try {
                   var json = JSON.parse(this.responseText);
-                  if(json.data && json.data.posts) {
+                  if(json.score && json.id) {
+                      filterId(json.id);
+                  } else if(json.data && json.data.posts) {
                       var filtered = [];
                       json.data.posts.forEach(function(p) {
                           if(!isFilteredId(p.id) && (showVideo() || p.type!='Animated')) {
@@ -148,16 +149,11 @@ unsafeWindow.XMLHttpRequest = class extends XMLHttpRequest {// by extending, we 
                       this.response = json;
                   }
               } catch(e) {
-                  debugger;
+                //  debugger;
               }
           }
-
-        this._onreadystatechange();// call original event handler
-      }
-    };
-
-    super.send();// finally, we call the original send function
-  };
+    });
+    origOpen.apply(this, arguments);
 };
 
 importFilteredIds();
