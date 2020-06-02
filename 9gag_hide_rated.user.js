@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.6
+// @version			0.7
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -34,7 +34,10 @@ function hasScriptParam(key) {
 // ----------------- VOTED -----------------
 
 var PARAM_IDS = 'IDS';
-var FILTERED_IDS = "";
+var FILTERED_IDS = '';
+
+var PARAM_HASHS = 'HASHS';
+var FILTERED_HASH = '';
 
 function importFilteredIds() {
     FILTERED_IDS = getScriptParam(PARAM_IDS);
@@ -42,21 +45,78 @@ function importFilteredIds() {
     	FILTERED_IDS = '';
     }
     console.log(FILTERED_IDS);
+    FILTERED_HASH = getScriptParam(PARAM_HASHS);
+    if(!FILTERED_HASH) {
+    	FILTERED_HASH = '';
+    }
 }
 
 function isFilteredId(id) {
     return FILTERED_IDS.indexOf(id)!=-1;
+}
+function isFilteredHash(hash) {
+    return hash && FILTERED_HASH.indexOf(hash)!=-1;
 }
 
 function filterId(id) {
     if(!id) {
         return;
     }
+    var imgJQ = getImgJQ(id);
+    var hash = hashImage(imgJQ);
+    if(hash && !isFilteredHash(hash)) {
+        FILTERED_HASH += hash+",";
+        setScriptParam(PARAM_HASHS,FILTERED_HASH);
+    }
     if(isFilteredId(id)) {
         return;
     }
     FILTERED_IDS += id+",";
     setScriptParam(PARAM_IDS,FILTERED_IDS);
+}
+
+// HASH IMAGES
+
+var HASH = false;
+
+function cyrb53(str, seed = 0) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ h1>>>16, 2246822507) ^ Math.imul(h2 ^ h2>>>13, 3266489909);
+    h2 = Math.imul(h2 ^ h2>>>16, 2246822507) ^ Math.imul(h1 ^ h1>>>13, 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1>>>0);
+};
+
+function hashImage(imgJQ) {
+    if(!HASH) {
+        return null;
+    }
+    var hash = imgJQ.attr('data-hash');
+    if(hash) {
+        return hash;
+    }
+    var imgElement = imgJQ[0];
+    if(!imgElement) return null;
+    imgElement.crossOrigin = "Anonymous";
+    imgElement.currentSrc = imgElement.src;
+    var c = document.createElement('canvas');
+    c.height = imgElement.naturalHeight;
+    c.width = imgElement.naturalWidth;
+    var ctx = c.getContext('2d');
+    try {
+        debugger;
+        ctx.drawImage(imgElement, 0, 0, c.width, c.height);
+        var base64String = c.toDataURL();
+        hash = cyrb53(base64String);
+        imgJQ.attr('hash',hash);
+        return hash;
+    } catch(e) {
+        return null;
+    }
 }
 
 
@@ -90,6 +150,10 @@ function getId(article) {
     return article.id ? article.id.replace('jsid-post-','') : null;
 }
 
+function getImgJQ(id) {
+    return $('#jsid-post-'+id+' img[alt]');
+}
+
 var MAX_PASS = 5;
 var PREVIOUS_PASS = {};
 function hideVoted() {
@@ -102,12 +166,18 @@ function hideVoted() {
         var id = getId(article);
         if(isFilteredId(id)) {
             article.remove();
-        } else if(!PREVIOUS_PASS['id_'+id]) {
-            PREVIOUS_PASS['id_'+id] = MAX_PASS;
-        } else if(PREVIOUS_PASS['id_'+id]==1) {
-            filterId(id);
         } else {
-            PREVIOUS_PASS['id_'+id]--;
+            var imgJQ = getImgJQ(id);
+            var hash = hashImage(imgJQ);
+            if(isFilteredHash(hash)) {
+                article.remove();
+            } else if(!PREVIOUS_PASS['id_'+id]) {
+                PREVIOUS_PASS['id_'+id] = MAX_PASS;
+            } else if(PREVIOUS_PASS['id_'+id]==1) {
+                filterId(id);
+            } else {
+                PREVIOUS_PASS['id_'+id]--;
+            }
         }
     });
 
@@ -117,6 +187,14 @@ function hideVoted() {
     if(!showVideo()) {
         $("video").closest('article').remove();
     }
+
+    var streams = $('div[id*=stream]');
+    streams.each(function(index,stream) {
+        stream = $(stream);
+        if(!stream.text()) {
+            stream.remove();
+        }
+    });
 }
 
 $("#sidebar-content").remove();
