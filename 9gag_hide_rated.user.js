@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.10
+// @version			0.10.1
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -178,8 +178,6 @@ function getImgJQ(id) {
     return $('#jsid-post-'+id+' img[alt]');
 }
 
-var MAX_PASS = 5;
-var PREVIOUS_PASS = {};
 function hideVoted() {
     $('.share').remove();
     $('article:not([id])').remove();
@@ -196,14 +194,10 @@ function hideVoted() {
             var hash = hashImage(imgJQ);
             if(isFilteredHash(hash)) {
                 article.remove();
-            } else if(!PREVIOUS_PASS['id_'+id]) {
-                PREVIOUS_PASS['id_'+id] = MAX_PASS;
-            } else if(PREVIOUS_PASS['id_'+id]==1) {
+            } else {
                 var score = $(article).find('.active');
                 score = score.hasClass('up') ? 'u' :'d';
                 filterId(id,score);
-            } else {
-                PREVIOUS_PASS['id_'+id]--;
             }
         }
     });
