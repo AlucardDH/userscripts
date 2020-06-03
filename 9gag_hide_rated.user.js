@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.8
+// @version			0.9
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -51,14 +51,19 @@ function importFilteredIds() {
     }
 }
 
-function isFilteredId(id) {
-    return FILTERED_IDS.indexOf(id)!=-1;
+unsafeWindow.isFilteredId = function(id) {
+    var index = FILTERED_IDS.indexOf(id);
+    if(index==-1) return 0;
+    var score = FILTERED_IDS.substr(index+id.length,1);
+    if(score=='d') return -1;
+    else return 1;
+    //return FILTERED_IDS.indexOf(id)!=-1;
 }
 function isFilteredHash(hash) {
     return hash && FILTERED_HASH.indexOf(hash)!=-1;
 }
 
-function filterId(id) {
+function filterId(id,score) {
     if(!id) {
         return;
     }
@@ -71,7 +76,7 @@ function filterId(id) {
     if(isFilteredId(id)) {
         return;
     }
-    FILTERED_IDS += id+",";
+    FILTERED_IDS += id+(score ? score:'')+",";
     setScriptParam(PARAM_IDS,FILTERED_IDS);
 }
 
@@ -146,7 +151,6 @@ unsafeWindow.hideVideos = function() {
 };
 
 function getId(article) {
-    if(article.id)
     return article.id ? article.id.replace('jsid-post-','') : null;
 }
 
@@ -162,7 +166,7 @@ function hideVoted() {
     $('.inline-ad-container').remove();
     $('.ora-player-container').closest('article').remove();
 
-    var clean = $(".active").closest('article');
+    var clean = $('.active').closest('article');
     clean.each(function(index,article) {
         var id = getId(article);
         if(isFilteredId(id)) {
@@ -179,6 +183,13 @@ function hideVoted() {
             } else {
                 PREVIOUS_PASS['id_'+id]--;
             }
+        }
+    });
+    clean = $('article');
+    clean.each(function(index,article) {
+        var id = getId(article);
+        if(isFilteredId(id)) {
+            $(article).find('.down')[0].click();
         }
     });
 
@@ -210,10 +221,10 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
               try {
                   var json = JSON.parse(this.responseText);
                   if(json.score && json.id) {
-                      filterId(json.id);
+                      filterId(json.id,json.score==1 ? "u":"d");
                       hideVoted();
                   } else if(json.data && json.data.posts) {
-                      setTimeout(hideVoted,1000);
+                      
 /*
                       var filtered = [];
                       json.data.posts.forEach(function(p) {
@@ -230,6 +241,10 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
                       this.responseText = JSON.stringify(json);
                       this.response = json;
 */
+                      json.data.posts.forEach(function(p) {
+                           console.log(p.title,p);
+                      });
+                      setTimeout(hideVoted,1000);
                   }
               } catch(e) {
                 //  debugger;
