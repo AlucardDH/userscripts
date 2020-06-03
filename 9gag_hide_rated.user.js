@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.7
+// @version			0.8
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -157,8 +157,9 @@ function getImgJQ(id) {
 var MAX_PASS = 5;
 var PREVIOUS_PASS = {};
 function hideVoted() {
+    $('.share').remove();
     $('article:not([id])').remove();
-
+    $('.inline-ad-container').remove();
     $('.ora-player-container').closest('article').remove();
 
     var clean = $(".active").closest('article');
@@ -210,7 +211,10 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
                   var json = JSON.parse(this.responseText);
                   if(json.score && json.id) {
                       filterId(json.id);
+                      hideVoted();
                   } else if(json.data && json.data.posts) {
+                      setTimeout(hideVoted,1000);
+/*
                       var filtered = [];
                       json.data.posts.forEach(function(p) {
                           if(!isFilteredId(p.id) && (showVideo() || p.type!='Animated')) {
@@ -225,6 +229,7 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
 
                       this.responseText = JSON.stringify(json);
                       this.response = json;
+*/
                   }
               } catch(e) {
                 //  debugger;
@@ -235,4 +240,4 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
 };
 
 importFilteredIds();
-setInterval(hideVoted,1000);
+setTimeout(hideVoted,1000);
