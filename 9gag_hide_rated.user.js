@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.9
+// @version			0.10
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -10,6 +10,7 @@
 // @require 	 	https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @grant		    GM_addStyle
 // @grant           unsafeWindow
 // ==/UserScript==
 
@@ -30,6 +31,25 @@ function getScriptParam(key) {
 function hasScriptParam(key) {
     return getScriptParam(key);
 }
+
+// ----------------- CSS -----------------
+
+function styleToString(style) {
+	var result = style.selector;
+	result += "{";
+	for(var property in style) {
+		if(property.indexOf("elector")<0) {
+			result += property+":"+style[property]+";";
+		}
+
+	}
+	result += "}";
+
+	return result;
+}
+
+GM_addStyle(styleToString({selector:".share","display":"none"}));
+GM_addStyle(styleToString({selector:"div.post-view.video-post,video,section#list-view-2 .post-container a img","width":"700px !important"}));
 
 // ----------------- VOTED -----------------
 
@@ -179,7 +199,9 @@ function hideVoted() {
             } else if(!PREVIOUS_PASS['id_'+id]) {
                 PREVIOUS_PASS['id_'+id] = MAX_PASS;
             } else if(PREVIOUS_PASS['id_'+id]==1) {
-                filterId(id);
+                var score = $(article).find('.active');
+                score = score.hasClass('up') ? 'u' :'d';
+                filterId(id,score);
             } else {
                 PREVIOUS_PASS['id_'+id]--;
             }
@@ -207,6 +229,17 @@ function hideVoted() {
             stream.remove();
         }
     });
+
+    bigiffy();
+}
+
+function bigiffy() {
+    $('article img[alt]').each(function(index,img) {
+        img = $(img);
+        var url = img.attr('src');
+        img.attr('src',url.replace(/460s\.jpg$/,'700b\.jpg'));
+        img.css('width','700px !important');
+    });
 }
 
 $("#sidebar-content").remove();
@@ -224,7 +257,7 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
                       filterId(json.id,json.score==1 ? "u":"d");
                       hideVoted();
                   } else if(json.data && json.data.posts) {
-                      
+
 /*
                       var filtered = [];
                       json.data.posts.forEach(function(p) {
@@ -241,9 +274,6 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
                       this.responseText = JSON.stringify(json);
                       this.response = json;
 */
-                      json.data.posts.forEach(function(p) {
-                           console.log(p.title,p);
-                      });
                       setTimeout(hideVoted,1000);
                   }
               } catch(e) {
