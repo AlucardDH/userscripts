@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.10.1
+// @version			0.10.2
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
+// @downloadURL     https://github.com/AlucardDH/userscripts/raw/master/9gag_hide_rated.user.js
+// @updateURL       https://github.com/AlucardDH/userscripts/raw/master/9gag_hide_rated.user.js
 // @match        	https://9gag.com/*
 // @exclude        	https://9gag.com/gag*
 // @exclude         https://9gag.com/u/alucarddh/*
@@ -49,7 +51,7 @@ function styleToString(style) {
 }
 
 GM_addStyle(styleToString({selector:".share","display":"none"}));
-GM_addStyle(styleToString({selector:"div.post-view.video-post,video,section#list-view-2 .post-container a img","width":"700px !important"}));
+GM_addStyle(styleToString({selector:"a.badge-track,.post-view.gif-post,.post-view.video-post,video,section#list-view-2 .post-container a img","width":"700px !important","padding-left":"0px !important"}));
 
 // ----------------- VOTED -----------------
 
@@ -179,6 +181,7 @@ function getImgJQ(id) {
 }
 
 function hideVoted() {
+    $('iframe').remove();
     $('.share').remove();
     $('article:not([id])').remove();
     $('.inline-ad-container').remove();
@@ -204,8 +207,11 @@ function hideVoted() {
     clean = $('article');
     clean.each(function(index,article) {
         var id = getId(article);
+        article = $(article);
         if(isFilteredId(id)) {
-            $(article).find('.down')[0].click();
+            article.find('.down')[0].click();
+        } else if(article.text()=='') {
+            article.remove();
         }
     });
 
