@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.11.0
+// @version			0.11.1
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL     https://github.com/AlucardDH/userscripts/raw/master/9gag_hide_rated.user.js
@@ -146,9 +146,9 @@ function hideVoted() {
         var id = getId(article);
         article = $(article);
         var score = score = isFilteredId(id)
-        if(score==-1) {
+        if(score==-1 && article.find('.down').length>0) {
             article.find('.down')[0].click();
-        } else if(score==1) {
+        } else if(score==1 && article.find('.up').length>0) {
             article.find('.up')[0].click();
         } else if(article.text()=='') {
             article.remove();
@@ -188,31 +188,37 @@ var origOpen = XMLHttpRequest.prototype.open;
 unsafeWindow.XMLHttpRequest.prototype.open = function() {
     this.addEventListener('loadend', function() {
         // if status 2x and responseText...
-        console.log('request loadend');
-        console.log(this);
-        if(this.responseText)  {
-              try {
-                  var json = JSON.parse(this.responseText);
-                  var url = this.responseURL;
-                  if(!json.score) {
-                      if(url.match(/\/like$/)) {
-                         json.score=1;
-                      } else if(url.match(/\/dislike$/)) {
-                         json.score=-1;
-                      }
-                  }
-                  if(json.score) {
-                      if(json.id) {
-                          filterId(json.id,json.score==1 ? "u":"d");
-                      }
-                      hideVoted();
-                  } else if(json.data && json.data.posts) {
-                      setTimeout(hideVoted,1000);
-                  }
-              } catch(e) {
-                //  debugger;
-              }
-          }
+        //console.log('request loadend');
+        //console.log(this);
+
+        try {
+            var json;
+            if((this.responseType=='text' || this.responseType=='') && this.responseText) {
+                json = JSON.parse(this.responseText);
+            } else if(this.responseType='json') {
+                json = this.response;
+            }
+            var url = this.responseURL;
+            if(json) {
+                if(!json.score) {
+                    if(url.match(/\/like$/)) {
+                        json.score=1;
+                    } else if(url.match(/\/dislike$/)) {
+                        json.score=-1;
+                    }
+                }
+                if(json.score) {
+                    if(json.id) {
+                        filterId(json.id,json.score==1 ? "u":"d");
+                    }
+                    hideVoted();
+                } else if(json.data && json.data.posts) {
+                    setTimeout(hideVoted,1000);
+                }
+            }
+        } catch(e) {
+            //  debugger;
+        }
     });
     origOpen.apply(this, arguments);
 };
