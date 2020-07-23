@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.10.2
+// @version			0.11.0
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL     https://github.com/AlucardDH/userscripts/raw/master/9gag_hide_rated.user.js
@@ -58,19 +58,12 @@ GM_addStyle(styleToString({selector:"a.badge-track,.post-view.gif-post,.post-vie
 var PARAM_IDS = 'IDS';
 var FILTERED_IDS = '';
 
-var PARAM_HASHS = 'HASHS';
-var FILTERED_HASH = '';
-
 function importFilteredIds() {
     FILTERED_IDS = getScriptParam(PARAM_IDS);
     if(!FILTERED_IDS) {
     	FILTERED_IDS = '';
     }
     console.log(FILTERED_IDS);
-    FILTERED_HASH = getScriptParam(PARAM_HASHS);
-    if(!FILTERED_HASH) {
-    	FILTERED_HASH = '';
-    }
 }
 
 unsafeWindow.isFilteredId = function(id) {
@@ -81,69 +74,16 @@ unsafeWindow.isFilteredId = function(id) {
     else return 1;
     //return FILTERED_IDS.indexOf(id)!=-1;
 }
-function isFilteredHash(hash) {
-    return hash && FILTERED_HASH.indexOf(hash)!=-1;
-}
 
 function filterId(id,score) {
     if(!id) {
         return;
-    }
-    var imgJQ = getImgJQ(id);
-    var hash = hashImage(imgJQ);
-    if(hash && !isFilteredHash(hash)) {
-        FILTERED_HASH += hash+",";
-        setScriptParam(PARAM_HASHS,FILTERED_HASH);
     }
     if(isFilteredId(id)) {
         return;
     }
     FILTERED_IDS += id+(score ? score:'')+",";
     setScriptParam(PARAM_IDS,FILTERED_IDS);
-}
-
-// HASH IMAGES
-
-var HASH = false;
-
-function cyrb53(str, seed = 0) {
-    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-    for (let i = 0, ch; i < str.length; i++) {
-        ch = str.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ h1>>>16, 2246822507) ^ Math.imul(h2 ^ h2>>>13, 3266489909);
-    h2 = Math.imul(h2 ^ h2>>>16, 2246822507) ^ Math.imul(h1 ^ h1>>>13, 3266489909);
-    return 4294967296 * (2097151 & h2) + (h1>>>0);
-};
-
-function hashImage(imgJQ) {
-    if(!HASH) {
-        return null;
-    }
-    var hash = imgJQ.attr('data-hash');
-    if(hash) {
-        return hash;
-    }
-    var imgElement = imgJQ[0];
-    if(!imgElement) return null;
-    imgElement.crossOrigin = "Anonymous";
-    imgElement.currentSrc = imgElement.src;
-    var c = document.createElement('canvas');
-    c.height = imgElement.naturalHeight;
-    c.width = imgElement.naturalWidth;
-    var ctx = c.getContext('2d');
-    try {
-        debugger;
-        ctx.drawImage(imgElement, 0, 0, c.width, c.height);
-        var base64String = c.toDataURL();
-        hash = cyrb53(base64String);
-        imgJQ.attr('hash',hash);
-        return hash;
-    } catch(e) {
-        return null;
-    }
 }
 
 
@@ -193,14 +133,11 @@ function hideVoted() {
         if(isFilteredId(id)) {
             article.remove();
         } else {
-            var imgJQ = getImgJQ(id);
-            var hash = hashImage(imgJQ);
-            if(isFilteredHash(hash)) {
-                article.remove();
-            } else {
-                var score = $(article).find('.active');
-                score = score.hasClass('up') ? 'u' :'d';
+            var score = $(article).find('.active');
+            score = score.hasClass('up') ? 'u' :'d';
+            if(score!=0) {
                 filterId(id,score);
+                article.remove();
             }
         }
     });
@@ -208,8 +145,11 @@ function hideVoted() {
     clean.each(function(index,article) {
         var id = getId(article);
         article = $(article);
-        if(isFilteredId(id)) {
+        var score = score = isFilteredId(id)
+        if(score==-1) {
             article.find('.down')[0].click();
+        } else if(score==1) {
+            article.find('.up')[0].click();
         } else if(article.text()=='') {
             article.remove();
         }
@@ -230,7 +170,7 @@ function hideVoted() {
         }
     });
 
-    bigiffy();
+    //bigiffy();
 }
 
 function bigiffy() {
@@ -253,27 +193,20 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
         if(this.responseText)  {
               try {
                   var json = JSON.parse(this.responseText);
-                  if(json.score && json.id) {
-                      filterId(json.id,json.score==1 ? "u":"d");
+                  var url = this.responseURL;
+                  if(!json.score) {
+                      if(url.match(/\/like$/)) {
+                         json.score=1;
+                      } else if(url.match(/\/dislike$/)) {
+                         json.score=-1;
+                      }
+                  }
+                  if(json.score) {
+                      if(json.id) {
+                          filterId(json.id,json.score==1 ? "u":"d");
+                      }
                       hideVoted();
                   } else if(json.data && json.data.posts) {
-
-/*
-                      var filtered = [];
-                      json.data.posts.forEach(function(p) {
-                          if(!isFilteredId(p.id) && (showVideo() || p.type!='Animated')) {
-                              filtered.push(p);
-                          }
-                      });
-                      //console.log('Filtered !',json.data.posts,filtered);
-                      json.data.posts = filtered;
-
-                      Object.defineProperty(this, "responseText", {writable: true});
-                      Object.defineProperty(this, "response", {writable: true});
-
-                      this.responseText = JSON.stringify(json);
-                      this.response = json;
-*/
                       setTimeout(hideVoted,1000);
                   }
               } catch(e) {
