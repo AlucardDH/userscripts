@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DH - Auto accept cookies
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  Auto click "accept" or "agree" button in a cookie message
 // @author       Damien Hembert
 // @match        *://*/*
@@ -27,7 +27,7 @@ function hasScriptParam(key) {
 }
 
 var TAG = ['a','button'];
-var LABEL = ['accept','agree'];
+var LABEL = ['accept','agree','ACCEPT','AGREE','OK'];
 
 function buildButtonSelector() {
     var result = '';
@@ -48,12 +48,13 @@ function buildButtonSelector() {
 
         setTimeout(function() {
             var button = $(':contains("cookie")').find(buildButtonSelector());
+            //debugger;
             if(button.length>0) {
                 console.log(button);
                 setScriptParam(document.location.hostname,"true");
                 button.click();
             }
-        },1000);
+        },2000);
     }
     //
 })();
