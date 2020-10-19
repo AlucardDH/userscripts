@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DH - GMail - auto copy Acoss Pin
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  GMail - auto copy Acoss Pin
 // @author       You
 // @match        https://mail.google.com/mail/u/0/
@@ -15,7 +15,7 @@ var LAST_INBOX_CHECK = null;
 
 function getMailTitle(element) {
     if(!element) {
-        element = document.getElementsByClassName('hP');
+        element = document.getElementsByTagName('span');
         if(element && element.length>0) element = element[0];
     }
     var result = element ? element.innerText : null;
