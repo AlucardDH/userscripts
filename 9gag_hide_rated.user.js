@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag hide voted
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.12.0
+// @version			0.12.1
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @downloadURL     https://github.com/AlucardDH/userscripts/raw/master/9gag_hide_rated.user.js
@@ -84,6 +84,7 @@ function filterId(id,score) {
     }
     FILTERED_IDS += id+(score ? score:'')+",";
     setScriptParam(PARAM_IDS,FILTERED_IDS);
+    scrollTo(0,0);
 }
 
 
@@ -191,18 +192,14 @@ var UPDOWN = 1;
 var SCROLLED_UP = false;
 var previousScrollHeight = 0;
 function autoScroll() {
-    var height = $($('div.page')[0]).height();
-    var sY = scrollY + visualViewport.height;
-    if(scrollY>0 && sY<height) {
+    var postsCount = $('.list-stream article').length;
+    if(postsCount>0) {
         // do not scroll while reading
-    }else if(height!=previousScrollHeight || height<4000) {
+    } else {
+        var height = $($('div.page')[0]).height();
         scrollBy(0,UPDOWN*height);
         UPDOWN *= -1;
         SCROLLED_UP = false;
-        previousScrollHeight = height;
-    } else if(!SCROLLED_UP) {
-        scrollBy(0,-height);
-        SCROLLED_UP = true;
     }
 }
 
@@ -222,6 +219,7 @@ function planNext() {
 var origOpen = XMLHttpRequest.prototype.open;
 unsafeWindow.XMLHttpRequest.prototype.open = function() {
     this.addEventListener('loadend', function() {
+
         // if status 2x and responseText...
         //console.log('request loadend');
         //console.log(this);
@@ -259,7 +257,10 @@ unsafeWindow.XMLHttpRequest.prototype.open = function() {
         } catch(e) {
             //  debugger;
         }
+
+
     });
+
     origOpen.apply(this, arguments);
 };
 

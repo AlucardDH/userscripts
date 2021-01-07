@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag night mode
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1.3
+// @version			0.1.4
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -37,10 +37,11 @@ GM_addStyle(styleToString({selector:".share","display":"none"}));
 GM_addStyle(styleToString({selector:"a.btn","background":"black !important","color":"white"}));
 GM_addStyle(styleToString({selector:".notification-list li *","background":"black !important"}));
 GM_addStyle(styleToString({selector:".featured-tag","position":"fixed !important","z-index":"1000","margin-top":"-24px","background":"black !important"}));
+GM_addStyle(styleToString({selector:".board-system","display":"none !important"}));
 
 setInterval(function() {
     $("#sidebar-content").remove();
-    $(".board-system").remove();
+  //  $(".board-system").remove();
     $('video').attr('controls','true');
 },100);
 $(function(){
