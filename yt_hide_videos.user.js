@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.5.5
+// @version         2.6.0
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -14,7 +14,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.5.5 : loaded !");
+console.log("DH - Youtube hide video 2.6.0 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -33,115 +33,162 @@ function hasScriptParam(key) {
     return getScriptParam(key);
 }
 
+// ----------------- Local database -----------------
+var localDatabase = {
+    setCollection : function(collectionId,collection) {
+        setScriptParam(collectionId,JSON.stringify(collection));    
+    },
+
+    getCollection : function(collectionId,onSuccess) {
+        var collection = getScriptParam(collectionId);
+        try {
+            collection = JSON.parse(collection); 
+        } catch(e) {
+            collection = [];
+        }
+        onSuccess(collection);
+    },
+
+    addDocumentToCollection : function(collectionId,document) {
+        localGetCollection(collectionId,function(collection) {
+            collection.push(document);
+            localSetCollection(collectionId,collection);    
+        });
+    }
+};
+
+
+
 // ----------------- MLAB UTILS -----------------
 
 var MLAB_BASE_URL = "https://api.mlab.com/api/1";
 var MLAB_DATABASE_KEY = "MLAB_DB";
 var MLAB_APIKEY_KEY = "MLAB_APIKEY";
 
-unsafeWindow.mlabLogin = function(database,apiKey) {
-    setScriptParam(MLAB_DATABASE_KEY,database);
-    setScriptParam(MLAB_APIKEY_KEY,apiKey);
+var mlabDatabase = {
+    login : function(database,apiKey) {
+        setScriptParam(MLAB_DATABASE_KEY,database);
+        setScriptParam(MLAB_APIKEY_KEY,apiKey);
 
-    oldImport();
-    importFromMlab();
+        importFromDatabase();
+    },
+
+    isLogged : function() {
+        return false; // mlab obsolete
+        //return hasScriptParam(MLAB_APIKEY_KEY) && hasScriptParam(MLAB_DATABASE_KEY);
+    },
+
+    formattedKey : function() {
+        return "?apiKey="+getScriptParam(MLAB_APIKEY_KEY);
+    },
+
+    addDocumentToCollection : function(collectionId,document) {
+        if(!mlabDatabase.isLogged()) {
+            return;
+        }
+
+        GM_xmlhttpRequest({
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabDatabase.formattedKey(),
+            data: JSON.stringify(document),
+            onload:  function(result) {
+                var data = result.response;
+                console.log(data);
+            }
+        });
+    },
+
+    getCollection : function(collection,onSuccess) {
+        if(!mlabDatabase.isLogged()) {
+            return;
+        }
+
+        GM_xmlhttpRequest({
+            method: "GET",
+            responseType :"json",
+            url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabDatabase.formattedKey()+"&l=10000",
+            onload:  function(result) {
+                var data = result.response;
+                console.log(data);
+                if(onSuccess) {
+                    onSuccess(data);
+                }
+            }
+        });
+    },
+
+    deleteDocuments : function(collection,query,onSuccess) {
+        if(!mlabDatabase.isLogged()) {
+            return;
+        }
+        if(!query) {
+            return;
+        }
+
+        GM_xmlhttpRequest({
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            responseType :"json",
+            url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabDatabase.formattedKey()+"&q="+JSON.stringify(query),
+            data:"[]",
+            onload:  function(result) {
+                var data = result.response;
+                console.log(data);
+                if(onSuccess) {
+                    onSuccess(data);
+                }
+            }
+        });
+    },
+
+    getDocument : function(collection,documentId,onSuccess) {
+        if(!mlabDatabase.isLogged()) {
+            return;
+        }
+
+        GM_xmlhttpRequest({
+            method: "GET",
+            responseType :"json",
+            url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+"/"+documentId+mlabDatabase.formattedKey(),
+            onload:  function(result) {
+                var data = result.response;
+                console.log(data);
+                if(onSuccess) {
+                    onSuccess(data);
+                }
+            }
+        });
+    }
 };
 
-function mlabIsLogged() {
-    //console.log(getScriptParam(MLAB_APIKEY_KEY),getScriptParam(MLAB_DATABASE_KEY));
-    return hasScriptParam(MLAB_APIKEY_KEY) && hasScriptParam(MLAB_DATABASE_KEY);
-}
 
-function mlabFormattedKey() {
-    return "?apiKey="+getScriptParam(MLAB_APIKEY_KEY);
-}
+unsafeWindow.mlabLogin = function(database,apiKey) {
+    mlabDatabase.login(database,apiKey);
+};
 
-function mlabAddDocumentToCollection(collection,document) {
-    if(!mlabIsLogged()) {
-        return;
+
+
+
+// ----------------- ABSTRACTION DATABASTE -----------------
+
+var DATABASE;
+
+function initDatabase() {
+    if(mlabDatabase.isLogged()) {
+        DATABASE = mlabDatabase;
+    } else {
+        DATABASE = localDatabase;
     }
-
-    GM_xmlhttpRequest({
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey(),
-        data: JSON.stringify(document),
-        onload:  function(result) {
-            var data = result.response;
-            console.log(data);
-        }
-    });
-}
-
-function mlabGetCollection(collection,onSuccess) {
-    if(!mlabIsLogged()) {
-        return;
-    }
-
-    GM_xmlhttpRequest({
-        method: "GET",
-        responseType :"json",
-        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey()+"&l=10000",
-        onload:  function(result) {
-            var data = result.response;
-            console.log(data);
-            if(onSuccess) {
-                onSuccess(data);
-            }
-        }
-    });
-}
-
-function mlabDeleteDocuments(collection,query,onSuccess) {
-    if(!mlabIsLogged()) {
-        return;
-    }
-    if(!query) {
-        return;
-    }
-
-    GM_xmlhttpRequest({
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        responseType :"json",
-        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+mlabFormattedKey()+"&q="+JSON.stringify(query),
-        data:"[]",
-        onload:  function(result) {
-            var data = result.response;
-            console.log(data);
-            if(onSuccess) {
-                onSuccess(data);
-            }
-        }
-    });
-}
-
-function mlabGetDocument(collection,documentId,onSuccess) {
-    if(!mlabIsLogged()) {
-        return;
-    }
-
-    GM_xmlhttpRequest({
-        method: "GET",
-        responseType :"json",
-        url: MLAB_BASE_URL+"/databases/"+getScriptParam(MLAB_DATABASE_KEY)+"/collections/"+collection+"/"+documentId+mlabFormattedKey(),
-        onload:  function(result) {
-            var data = result.response;
-            console.log(data);
-            if(onSuccess) {
-                onSuccess(data);
-            }
-        }
-    });
 }
 
 // ----------------- FILTERS -----------------
 
-var MLAB_COLLECTION_IDS = SCRIPT_BASE+"_IDS";
+var COLLECTION_IDS = SCRIPT_BASE+"_IDS";
 var FILTERED_IDS = "";
 var IMPORTED_FILTERED_IDS = false;
 
@@ -157,7 +204,7 @@ function filterId(id,watched) {
 
     FILTERED_IDS += id+",";
 
-    mlabAddDocumentToCollection(MLAB_COLLECTION_IDS,filter)
+    DATABASE.addDocumentToCollection(COLLECTION_IDS,filter)
 }
 
 function isFilteredId(id) {
@@ -165,7 +212,7 @@ function isFilteredId(id) {
 }
 
 function importFilteredIds() {
-    mlabGetCollection(MLAB_COLLECTION_IDS,function(result) {
+    DATABASE.getCollection(COLLECTION_IDS,function(result) {
         result.forEach(function(filter){
             FILTERED_IDS += filter['_id']+",";
         });
@@ -173,7 +220,7 @@ function importFilteredIds() {
     });
 }
 
-var MLAB_COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
+var COLLECTION_TITLES = SCRIPT_BASE+"_TITLES";
 var FILTERED_TTITLES = [];
 var IMPORTED_FILTERED_TTITLES = false;
 
@@ -190,7 +237,7 @@ unsafeWindow.filterTitle = function(title,youtuber) {
     }
     FILTERED_TTITLES.push(filter);
 
-    mlabAddDocumentToCollection(MLAB_COLLECTION_TITLES,filter);
+    DATABASE.addDocumentToCollection(COLLECTION_TITLES,filter);
 }
 
 function getFilterTitleSelector(filter) {
@@ -208,7 +255,7 @@ function getFilterTitleSelector(filter) {
 }
 
 function importFilteredTitles() {
-    mlabGetCollection(MLAB_COLLECTION_TITLES,function(result) {
+    DATABASE.getCollection(COLLECTION_TITLES,function(result) {
         result.forEach(function(filter){
             FILTERED_TTITLES.push(filter);
         });
@@ -216,30 +263,10 @@ function importFilteredTitles() {
     });
 }
 
-// ----------------- OLD IMPORT -----------------
-
-var OLD_COLLECTION = "YTH";
-var OLD_DOCUEMENT_ID = "youtubeIds";
-var OLD_MATCH_PREFIX = "MATCH_";
-
-function oldImport() {
-    mlabGetDocument(OLD_COLLECTION,OLD_DOCUEMENT_ID,function(result){
-        var content = result.content;
-        var items = content.split(',');
-        items.forEach(function(item){
-            if(item.indexOf(OLD_MATCH_PREFIX)>-1) {
-                item = item.substring(OLD_MATCH_PREFIX.length);
-                filterTitle(item.split('&&'));
-            } else if(item) {
-                filterId(item);
-            }
-        });
-    });
-}
-
 // ----------------- NEW IMPORT -----------------
 
-function importFromMlab() {
+function importFromDatabase() {
+    initDatabase();
     importFilteredIds();
     importFilteredTitles();
 }
@@ -468,7 +495,7 @@ function clean(thumbnails) {
     thumbnails.attr('style','');
 }
 
-importFromMlab();
+importFromDatabase();
 
 var previousHeight = 0;
 var interval = null;
