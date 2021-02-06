@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name			DH - 9gag night mode
 // @namespace		https://github.com/AlucardDH/userscripts
-// @version			0.1.4
+// @version			0.1.5
 // @author			AlucardDH
 // @projectPage		https://github.com/AlucardDH/userscripts
 // @match        	https://9gag.com/*
@@ -36,6 +36,7 @@ GM_addStyle(styleToString({selector:"section#sidebar","height":"2000px !importan
 GM_addStyle(styleToString({selector:".share","display":"none"}));
 GM_addStyle(styleToString({selector:"a.btn","background":"black !important","color":"white"}));
 GM_addStyle(styleToString({selector:".notification-list li *","background":"black !important"}));
+GM_addStyle(styleToString({selector:".comment-list-item:hover","background":"black !important"}));
 GM_addStyle(styleToString({selector:".featured-tag","position":"fixed !important","z-index":"1000","margin-top":"-24px","background":"black !important"}));
 GM_addStyle(styleToString({selector:".board-system","display":"none !important"}));
 
