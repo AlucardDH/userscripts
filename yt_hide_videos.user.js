@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.7.2
+// @version         2.7.3
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -15,7 +15,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.7.2 : loaded !");
+console.log("DH - Youtube hide video 2.7.3 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -304,42 +304,6 @@ function getChannelYoutuber() {
     return elements!=null && elements.length>0 ? $('#channel-title')[0].innerText : null;
 }
 
-var SHOW_BUTTONS = 3;
-unsafeWindow.addHideSeriesButtons = function() {
-    $('.removeSeries').remove();
-
-    var stats = {};
-
-    $.each($("ytd-grid-video-renderer"),function(index,element) {
-
-        setTimeout(function(){
-            var e = $(element);
-            var youtuber = getVideoYoutuber(e);
-            if(!youtuber || youtuber.length==0) {
-                youtuber = getChannelYoutuber();
-            }
-
-            var title = getVideoTitle(e);
-            var showed = 0;
-
-            for(var i=0;showed<SHOW_BUTTONS && i<stats[youtuber].length;i++) {
-                if($.inArray(title,stats[youtuber][i].titles)!=-1) {
-                    var str = stats[youtuber][i].string;
-                    //ytd-subscribe-button-renderer
-                    var a = $('<paper-button class=" removeSeries" subscribed style="display:inline-block;" title="'+str+'">Cacher "'+str+'"</paper-button>');
-                    a.click(function(e){
-                        filterTitle(e.target.title,youtuber);
-                    });
-                    e.append(a);
-                    showed++;
-                }
-            }
-            console.log('Done :',title);
-        },10);
-    });
-}
-
-
 // ----------------- APPLY FILTERS -----------------
 
 function hideJQueryGroup(group,subscriptions) {
@@ -391,7 +355,7 @@ function hideWatchedAndFilteredIds(subscriptions) {
             // show button to hide
         } else {
             if(!e.hasClass("dhdone")) {
-                var a = $('<paper-button class="ytd-subscribe-button-renderer dhbutton" meta-id="'+itemId+'" subscribed style="display:inline-block;">Cacher</paper-button>');
+                var a = $('<tp-yt-paper-button class="ytd-subscribe-button-renderer dhbutton" meta-id="'+itemId+'" subscribed style="display:inline-block;">Cacher</tp-yt-paper-button>');
                 a.click(function(event){
                     var source = event.target || event.srcElement;
                     var itemIdTemp = $(source).attr('meta-id');
@@ -439,7 +403,7 @@ function hideWatched(url) {
 }
 
 function checkPageUpdate() {
-    if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES && youtubeReady()) {
+	if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES && youtubeReady()) {
         var url = window.location.href;
         if(previousUrl!=url) {
             var thumbnails = $("ytd-grid-video-renderer");
@@ -451,15 +415,15 @@ function checkPageUpdate() {
             }
         }
 
-        var currentHeight = document.documentElement.scrollHeight;
-        counter++;
-        if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
-            stop();
-            previousHeight = currentHeight;
-            hideWatched(url);
-            start();
-        }
-    }
+	    var currentHeight = document.documentElement.scrollHeight;
+	    counter++;
+	    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
+	        stop();
+	        previousHeight = currentHeight;
+	        hideWatched(url);
+	        start();
+	    }
+	}
 }
 
 function start() {
