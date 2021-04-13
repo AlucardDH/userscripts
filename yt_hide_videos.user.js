@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         2.7.1
+// @version         2.7.2
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos.user.js
@@ -15,7 +15,7 @@
 // @grant           unsafeWindow
 // ==/UserScript==
 
-console.log("DH - Youtube hide video 2.7.1 : loaded !");
+console.log("DH - Youtube hide video 2.7.2 : loaded !");
 
 
 // ----------------- USERSCRIPT UTILS -----------------
@@ -304,79 +304,6 @@ function getChannelYoutuber() {
     return elements!=null && elements.length>0 ? $('#channel-title')[0].innerText : null;
 }
 
-function addStats(item) {
-    var title = getVideoTitle(item);
-
-    var youtuber = getVideoYoutuber(item);
-    if(youtuber.length==0) youtuber = getChannelYoutuber();
-
-    if(!TITLES[youtuber]) {
-        TITLES[youtuber] = [];
-    }
-
-    TITLES[youtuber].push(title);
-}
-
-
-unsafeWindow.getStats = function(youtuber) {
-    if(!youtuber) {
-        youtuber = getChannelYoutuber();
-    }
-
-    if(!TITLES[youtuber]) {
-        return [];
-    }
-
-    var results = {};
-    var resultsToSort = [];
-
-    TITLES[youtuber].forEach(function(title1) {
-        for(var iEnd=title1.length;iEnd>3;iEnd--) {
-            for(var iStart=0;iStart<iEnd-3;iStart++) {
-                var subTitle = title1.substring(iStart,iEnd);
-                if(results[subTitle]) {
-                    continue;
-                }
-
-                results[subTitle] = {
-                    string:subTitle,
-                    count:1,
-                    titles:[title1]
-                };
-
-                TITLES[youtuber].forEach(function(title2) {
-                    if(title2!=title1 && title2.indexOf(subTitle)>-1) {
-                        results[subTitle].count++;
-                        results[subTitle].titles.push(title2);
-                    }
-                });
-
-                var skip = false;
-                for(var iSearch=resultsToSort.length-1;iSearch>-1;iSearch--) {
-                    if(skip) continue;
-                    var previous = resultsToSort[iSearch];
-                    if(previous.string.indexOf(subTitle)>-1 && results[subTitle].count==previous.count) {
-                        skip = true;
-                    }
-                }
-
-                if(!skip && results[subTitle].count>1) {
-                    resultsToSort.push(results[subTitle]);
-                }
-            }
-        }
-    });
-
-    var weight = function(obj) {
-        return obj.count*obj.string.length;
-    };
-    resultsToSort.sort(function(a, b){
-        return weight(b) - weight(a);
-    });
-
-    return resultsToSort;
-}
-
 var SHOW_BUTTONS = 3;
 unsafeWindow.addHideSeriesButtons = function() {
     $('.removeSeries').remove();
@@ -391,11 +318,6 @@ unsafeWindow.addHideSeriesButtons = function() {
             if(!youtuber || youtuber.length==0) {
                 youtuber = getChannelYoutuber();
             }
-            /*
-            if(!stats[youtuber]) {
-                stats[youtuber] = getStats(youtuber);
-            }
-            */
 
             var title = getVideoTitle(e);
             var showed = 0;
@@ -452,13 +374,6 @@ function hideWatchedAndFilteredIds(subscriptions) {
         var e = $(element);
         var itemId = getVideoId(e);
 
-        // stats first
-        if(!e.hasClass("dhdone_stats")) {
-            addStats(e);
-            newStats = true;
-            e.addClass("dhdone_stats");
-        }
-
         // save and hide watched
         var watched = isVideoWatched(e);
         if(watched) {
@@ -498,11 +413,14 @@ function clean(thumbnails) {
     thumbnails.attr('style','');
 }
 
+var READY = false;
 function youtubeReady() {
+    if(READY) return true;
     var thumbnails = $('ytd-thumbnail');
     var timers = $('ytd-thumbnail-overlay-time-status-renderer');
     var ready =  (thumbnails.length-timers.length)<9;
     //console.log('YTH - Youtube Ready ',ready);
+    if(ready) READY = true;
     return ready;
 }
 
@@ -521,7 +439,7 @@ function hideWatched(url) {
 }
 
 function checkPageUpdate() {
-	if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES && youtubeReady()) {
+    if(IMPORTED_FILTERED_IDS && IMPORTED_FILTERED_TTITLES && youtubeReady()) {
         var url = window.location.href;
         if(previousUrl!=url) {
             var thumbnails = $("ytd-grid-video-renderer");
@@ -533,15 +451,15 @@ function checkPageUpdate() {
             }
         }
 
-	    var currentHeight = document.documentElement.scrollHeight;
-	    counter++;
-	    if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
-	        stop();
-	        previousHeight = currentHeight;
-	        hideWatched(url);
-	        start();
-	    }
-	}
+        var currentHeight = document.documentElement.scrollHeight;
+        counter++;
+        if(previousHeight!=currentHeight || counter>=FORCE__REFRESH_COUNT) {
+            stop();
+            previousHeight = currentHeight;
+            hideWatched(url);
+            start();
+        }
+    }
 }
 
 function start() {
