@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name            DH - Youtube hide video LIGHT
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.1
+// @version         0.1.2
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos_light.user.js
 // @updateURL       https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos_light.user.js
 // @match           https://www.youtube.com/*
-// @require         https://code.jquery.com/jquery-3.6.0.min.js
+// @exclude         https://www.youtube.com/watch*
+// @require         https://zeptojs.com/zepto.min.js
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
