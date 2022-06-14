@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            DH - Youtube hide video LIGHT
 // @namespace       https://github.com/AlucardDH/userscripts
-// @version         0.1.2
+// @version         0.2.0
 // @author          AlucardDH
 // @projectPage     https://github.com/AlucardDH/userscripts
 // @downloadURL     https://raw.githubusercontent.com/AlucardDH/userscripts/master/yt_hide_videos_light.user.js
@@ -12,30 +12,32 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
-// @grant		    GM_addStyle
+// @grant           GM_addStyle
 // @grant           unsafeWindow
 // ==/UserScript==
 
 unsafeWindow.jquery=$;
 
 function styleToString(style) {
-	var result = style.selector;
-	result += "{";
-	for(var property in style) {
-		if(property.indexOf("elector")<0) {
-			result += property+":"+style[property]+";";
-		}
+    var result = style.selector;
+    result += "{";
+    for(var property in style) {
+        if(property.indexOf("elector")<0) {
+            result += property+":"+style[property]+";";
+        }
 
-	}
-	result += "}";
+    }
+    result += "}";
 
-	return result;
+    return result;
 }
 GM_addStyle(styleToString({selector:"#hideWatchedGroup .toggle-container","top":"8px","left":"8px"}));
 
 var DISPLAY_WATCHED = false;
+var DISPLAY_SHORTS = false;
 
 var previousWatchedCount = 0;
+var previousShortsCount = 0;
 
 function displayWatched(b) {
     var watched = $('ytd-thumbnail-overlay-resume-playback-renderer').closest('ytd-grid-video-renderer,ytd-video-renderer,ytd-rich-item-renderer ');
@@ -52,17 +54,37 @@ function displayWatched(b) {
 
 }
 
+function displayShorts(b) {
+    var shorts = $('ytd-thumbnail-overlay-time-status-renderer[overlay-style=SHORTS]').closest('ytd-grid-video-renderer,ytd-video-renderer,ytd-rich-item-renderer ');
+    var count = shorts.length;
+    if(b!=DISPLAY_SHORTS || previousShortsCount!=count) {
+        DISPLAY_SHORTS = b;
+        previousShortsCount = count;
+        if(b) {
+            shorts.show();
+        } else {
+            shorts.hide();
+        }
+    }
+
+}
+
 var UPDATING = false;
 function update() {
-    if(!UPDATING) {
+    var url = document.URL;
+    if(!UPDATING && url.indexOf('watch?')==-1) {
         UPDATING = true;
         displayWatched(DISPLAY_WATCHED);
+        displayShorts(DISPLAY_SHORTS);
         UPDATING = false;
     }
 }
 
 function toggleWatched() {
     displayWatched(!DISPLAY_WATCHED);
+}
+function toggleShorts() {
+    displayShorts(!DISPLAY_SHORTS);
 }
 
 function addButtons() {
@@ -77,6 +99,15 @@ function addButtons() {
     toggleButton.click(toggleWatched);
     toggleGroup.append(toggleButton);
 
+    var toggleButton = $(
+        '<tp-yt-paper-toggle-button id="toggle" style="vertical-align:middle;display: inline-block;" touch-action: pan-y; noink="" class="style-scope ytd-settings-switch-renderer" role="button" toggles="" active="" checked="">'
+           +'<div class="toggle-label style-scope tp-yt-paper-toggle-button" style="display:inline-block;height:24px;padding:8px;line-height:24px;">HIDE SHORTS'
+          +'</div>'
+        +'</tp-yt-paper-toggle-button>'
+    );
+    toggleButton.click(toggleShorts);
+    toggleGroup.append(toggleButton);
+
     var pos = $('ytd-masthead #end');
 
     pos.prepend(toggleGroup);
@@ -88,5 +119,5 @@ $(function() {
     setInterval(update,1000);
 });
 
-console.log("DH - Youtube hide video LIGHT 0.1 : loaded !");
+console.log("DH - Youtube hide video LIGHT 0.2.0 : loaded !");
 
